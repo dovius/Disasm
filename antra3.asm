@@ -1,10 +1,3 @@
-;; Programa reaguoja i perduodamus parametrus
-;; isveda pagalba, jei nera nurodyti reikiami parametrai
-;; source failas skaitomas dalimis
-;; destination failas rasomas dalimis
-;; jei destination failas jau egzistuoja, jis yra isvalomas
-;; jei source failas nenurodytas - skaito iš stdin iki tuščios naujos eilutės
-;; galima nurodyti daugiau nei vieną source failą - juos sujungia
 .model small
 .stack 100H
 
@@ -18,7 +11,7 @@ testui    db 'ABC'
 html1			db '<!DOCTYPE html> <html>',13,'<head>',13,'<title> </title>',13,'</head>',13,'<body> <code>',13,10,'$'
 html2     db '</code> </body>',13,'</html>',13
 
-sourceF  	db 'create.asm$'
+sourceF  	db 'antra3.asm$'
 sourceFHandle	dw ?
 buffD		  DB 20 DUP("$")
 
@@ -35,13 +28,14 @@ temp      db 0
 simbolis  db 0
 bxFlag    db 0
 commentFlag db 0
+tagFlag 	db 0
 
 newline 	 db '<br>'
-commentD 	 db '<code style=color:grey>',59 ; dvigubos kabutes
+commentD 	 db '<code style=color:grey>' ; dvigubos kabutes
 redD		 	 db '<code style=color:red>',59
 endcodeD   db '</code>'
 
-red				 db 'ax bx dx cx si di es sp ah al bh bl dh dl ds ', 13, 13
+red				 db 'ax bx dx cx si di es sp ah al bh bl dh dl ds cmp mov jmp push lea pop int jmp call inc dec xor or and jne je jz jc lodsb jl jg loop stosb ', 13, 13
 
 .code
 
@@ -138,18 +132,16 @@ atrenka:
 ;-----------------------ATRENKA---------------------------------
 lodsb  				; Load byte at address DS:(E)SI into AL
 
-;mov ah, [commentFlag]
-;cmp ah, 0
-;jne cont13
-;cmp al, 59
-;jne cont13
+mov ah, [commentFlag]
+cmp ah, 0
+jne cont13
+cmp al, 59
+jne cont13
 ; suradom ; ir pries tai nebuvo
-;mov [commentFlag] , 1
-;call printComment
+mov [commentFlag] , 1
+call printComment
 
 cont13:
-
-
 
 cmp al, 41h               ; compare al with "A"
 jl next_char               ; jump to next character if less
@@ -160,18 +152,30 @@ jl next_char               ; jump to next character if less (since it's between 
 cmp al, 7Ah               ; compare al with "z"
 jg next_char               ; above "Z" -> not a character
 found_letter:
-;push ax
-;mov ah, [commentFlag]
-;cmp ah, 1
-;pop ax
-;je cont1
 
+push ax
+mov [simbolis], al
+mov ah, [commentFlag]
+cmp ah, 1
+pop ax
+je cont1
 
 mov [wordB+bx], al
 inc bx
 jmp cont2
 
 next_char:
+
+cmp al, ':'
+jne cont15
+mov [wordB+bx], al
+mov [tagFlag], 1
+inc bx
+mov [match],1
+jmp checkRedReturn
+
+cont15:
+
 mov [simbolis], al
 cmp bx, 0
 je cont1
@@ -179,6 +183,7 @@ je cont1
 ;kai reikia atpazinti zodi
 jmp checkRed
 checkRedReturn:
+
 cmp match,1
 jne cont8
 ;atspausdint zodi su apdorojimu
@@ -212,7 +217,14 @@ call printSimbol
 cont2:
 mov match, 0
 ; ------- loop atrenka
-loop	atrenka
+;loop	atrenka
+
+cmp cx, 0
+dec cx
+je atrenkaBaige
+jmp atrenka
+
+atrenkaBaige:
 
 push bx
 
@@ -236,7 +248,6 @@ cmp bx, 20
 jne loop1
 pop bx
 jmp afterClear
-
 
 checkRed:
 ;mov si, redD
@@ -366,7 +377,6 @@ int	21h
 mov	ax, 4c02h
 int	21h
 
-
 ;; procedures --------------------------------------------
 
 skip_spaces PROC near
@@ -397,9 +407,6 @@ lodsb				; uzkrauna kita simboli
 stosb                           ; Store AL at address ES:(E)DI, di = di + 1
 jmp read_filename_start
 read_filename ENDP
-
-
-
 
 printCodeWithSpan PROC near
 push cx
@@ -460,6 +467,20 @@ mov al, [simbolis]
 cmp al, 10
 jne cont11
 
+mov ah, [commentFlag]
+cmp ah, 1
+jne cont14
+
+mov cx, 7
+mov	ah, 40h
+mov bx, destFHandle
+lea dx, endcodeD
+int 21h
+
+mov [commentFlag], 0
+
+cont14:
+
 mov cx, 4
 mov	ah, 40h
 mov bx, destFHandle
@@ -495,7 +516,7 @@ push ax
 push bx
 
 mov bx, destFHandle
-mov cx, 24
+mov cx, 23
 mov ah, 40h
 mov dx, offset commentD
 int 21h;
@@ -505,7 +526,5 @@ pop ax
 pop cx
 ret
 printComment ENDP
-
-
 
 end START

@@ -1,4 +1,4 @@
-.model small
+.model small ;asdasd 1
 .stack 100H
 
 .data
@@ -18,7 +18,7 @@ buffD		  DB 20 DUP("$")
 destF   	db 'antra2.html$'
 destFHandle 	dw ?
 
-buffer    db 200 dup (?)
+buffer    db 202 dup (?)
 wordB     db 20 dup (0)
 match     db 0
 testS     db 0
@@ -31,11 +31,21 @@ commentFlag db 0
 tagFlag 	db 0
 
 newline 	 db '<br>'
-commentD 	 db '<code style=color:grey>' ; dvigubos kabutes
-redD		 	 db '<code style=color:red>',59
+commentD 	 db '<code style=color:#B2B2B2>' ; dvigubos kabutes
+redD		 	 db '<code style=color:#9F3538>',59
+blueD		 	 db '<code style=color:#406C81>',59
+orangeD	 	 db '<code style=color:#CE6E2D>',59
+pinkD	 	 db '<code style=color:#A859F2>',59
 endcodeD   db '</code>'
+less			 db '&lt'
+more			 db '&gt'
+color 		 db 0  ; 0 -raudona, 1 - zalia 2- geltona 3 - ruzavai
+count      db 0
+numFlag    db 0
 
-red				 db 'ax bx dx cx si di es sp ah al bh bl dh dl ds cmp mov jmp push lea pop int jmp call inc dec xor or and jne je jz jc lodsb jl jg loop stosb ', 13, 13
+red				 db 'ax bx dx cx si di es sp ah al bh bl dh dl ds ', 13, 13
+orange     db 'cmp ret mov jmp push lea pop int jmp call inc dec xor or and jne je jz jc lodsb jl jg loop stosb ', 13, 13
+
 
 .code
 
@@ -135,7 +145,7 @@ lodsb  				; Load byte at address DS:(E)SI into AL
 mov ah, [commentFlag]
 cmp ah, 0
 jne cont13
-cmp al, 59
+cmp al, 59 ; tikrinam del ';'
 jne cont13
 ; suradom ; ir pries tai nebuvo
 mov [commentFlag] , 1
@@ -158,20 +168,55 @@ mov [simbolis], al
 mov ah, [commentFlag]
 cmp ah, 1
 pop ax
-je cont1
+jne forJump
+jmp cont1
+forJump:
 
 mov [wordB+bx], al
 inc bx
 jmp cont2
 
 next_char:
+mov ah, [commentFlag]
+cmp ah, 1
+je neskaicius
+
+; jeigu _ tai pridedam pr zodzio
+cmp al, 95
+je found_letter
+
+;tikrinam, kad pirmas nebutu skaicius
+cmp bx, 0
+je neraide
+
+cmp al, 48             ; compare
+jl neskaicius      ; jump to next character if less
+cmp al, 57             ; compare al
+jle found_letter
+
+
+neraide:
+
+cmp al, 48             ; compare al
+jl neskaicius
+cmp al, 57             ; compare al
+jle skaicius2
+jmp neskaicius
+
+skaicius2:
+mov [numFlag], 1
+mov [color], 3
+jmp found_letter
+
+neskaicius:
 
 cmp al, ':'
 jne cont15
 mov [wordB+bx], al
 mov [tagFlag], 1
 inc bx
-mov [match],1
+mov [match], 1
+mov [color], 1
 jmp checkRedReturn
 
 cont15:
@@ -180,17 +225,37 @@ mov [simbolis], al
 cmp bx, 0
 je cont1
 
+mov ah, [numFlag]
+cmp ah, 1
+je printWithS
+
 ;kai reikia atpazinti zodi
 jmp checkRed
 checkRedReturn:
 
+
+
 cmp match,1
 jne cont8
 ;atspausdint zodi su apdorojimu
-
+printWithS:
 call printCodeWithSpan
+mov [numFlag], 0
+mov [color], 0
+
+push ax
+mov al, [tagFlag]
+cmp [tagFlag], 1
+je cont19
+pop ax
+;je cont16
+
 call printSimbol
 ;print last simbol
+cont19:
+mov [tagFlag], 0
+
+cont16:
 
 ;
 mov bx, 0
@@ -213,6 +278,7 @@ jmp cont2
 cont1:
 ; cia atspausdint viena char (ne raide)
 call printSimbol
+
 
 cont2:
 mov match, 0
@@ -254,11 +320,21 @@ checkRed:
 push bx
 push ax
 push si
+mov [count], 0
+lea si, red
+mov [color], 0
+
+
+checkloop:
+mov ah, [count]
+inc ah
+mov [count],ah
+;inc [count]
 
 ; pradzioj
 mov ax, 0 ; syntaxes
 mov bx, 0 ; bufferio
-lea si, red
+
 
 ; tesiam lyginima
 cont7:
@@ -280,7 +356,8 @@ jne cont6
 
 ; turim zodi
 mov [match], 1
-jmp exit3
+
+jmp exit5
 
 
 cont6: ; jei dar ne pilnas syntax zodis
@@ -315,6 +392,16 @@ jmp _7
 exit3:
 ;surade zodi
 
+mov [color], 2
+mov ax, 0 ; syntaxes
+mov bx, 0 ; bufferio
+lea si, orange
+cmp [count],2
+je exit5
+
+jmp checkloop
+
+exit5:
 
 pop si
 pop ax
@@ -414,10 +501,44 @@ push ax
 push bx
 push bx
 
-mov bx, destFHandle
-mov cx, 22
-mov ah, 40h
+
+mov al, [color]
+cmp al, 0
+je raudonai
+
+cmp al, 1
+je melynai
+
+cmp al, 2
+je oranzinei
+
+cmp al, 3
+je ruzavai
+
+melynai:
+mov dx, offset blueD
+mov cx, 26
+jmp setDestination
+
+oranzinei:
+mov dx, offset orangeD
+mov cx, 26
+jmp setDestination
+
+raudonai:
+mov cx, 26
 mov dx, offset redD
+jmp setDestination
+
+ruzavai:
+mov cx, 26
+mov dx, offset pinkD
+
+
+setDestination:
+mov bx, destFHandle
+mov ah, 40h
+
 int 21h;
 
 pop bx
@@ -489,12 +610,41 @@ int 21h
 
 cont11:
 
+
+cmp al, 60
+jne cont17
+
+mov bx, destFHandle
+mov cx, 3
+lea dx, less
+mov	ah, 40h			; INT 21h / AH= 40h - write to file
+int	21h
+jmp pabaiga2
+
+
+cont17:
+
+cmp al, 62
+jne cont18
+
+mov bx, destFHandle
+mov cx, 3
+lea dx, more
+mov	ah, 40h			; INT 21h / AH= 40h - write to file
+int	21h
+jmp pabaiga2
+
+
+
+cont18:
+
 mov bx, destFHandle
 mov cx, 1
 lea dx, [simbolis]
 mov	ah, 40h			; INT 21h / AH= 40h - write to file
 int	21h
 
+pabaiga2:
 pop bx
 pop ax
 pop cx
@@ -504,7 +654,7 @@ printSimbol ENDP
 inputConfig PROC near
 mov	bx, sourceFHandle
 mov	dx, offset buffer       ; address of buffer in dx
-mov	cx, 20       			  		; kiek baitu nuskaitysim
+mov	cx, 100       			  		; kiek baitu nuskaitysim
 mov	ah, 3fh      				   	; function 3Fh - read from file
 int	21h
 ret
@@ -515,8 +665,9 @@ push cx
 push ax
 push bx
 
+mov [numFlag], 0
 mov bx, destFHandle
-mov cx, 23
+mov cx, 26
 mov ah, 40h
 mov dx, offset commentD
 int 21h;
@@ -524,7 +675,7 @@ int 21h;
 pop bx
 pop ax
 pop cx
-ret
-printComment ENDP
+ret;nu nx
+printComment ENDP;bbz
 
 end START

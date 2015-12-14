@@ -20,7 +20,8 @@ lineCountH	dw 1   ;kairys  baitas eiles nr skaiciaus
 HEX_Map   DB  '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'
 HEX_Out   DB  "00", 13, 10, '$'   ; string with line feed and '$'-terminator
 
-lineStringAdd db ':  ',13,10
+spaceString  db '     '
+lineStringAdd db ':  ', '$'
 
 line_iret db 'CF', 9, 'IRET',13,10,'$'
 line_unkn db 9, 'Neatpazinta komanda',13,10, '$'
@@ -111,6 +112,13 @@ lodsb  				; Load byte at address DS:(E)SI into AL
 call printLineNumber
 
 
+;cmp al, 11001111b
+;jne not_iret
+;call com_iret
+;jmp inc_lineCount
+;not_iret:
+
+call com_unk
 
 
 call incLineNumber
@@ -204,6 +212,8 @@ read_filename ENDP
 
 
 IntegerToHexFromMap PROC
+		push si
+
     mov si, OFFSET Hex_Map          ; Pointer to hex-character table
 
     mov bx, ax                      ; BX = argument AX
@@ -218,6 +228,7 @@ IntegerToHexFromMap PROC
     mov dl, [si+bx]                 ; Read hex-character from the table
     mov [di+1], dl                  ; Store character at the second place in the output string
 
+		pop si
     ret
 IntegerToHexFromMap ENDP
 
@@ -247,7 +258,7 @@ printLineNumber PROC
   lea dx, HEX_Out
   int 21h
 
-  mov cx, 5
+  mov cx, 3
   mov ah, 40h
   mov bx, destFHandle
   lea dx, lineStringAdd
@@ -260,21 +271,16 @@ printLineNumber PROC
 printLineNumber ENDP
 
 incLineNumber PROC
-
-
+; --- jei lineCount=255 ir norim INC, reikia ji prilygint 0 ir lineCountH ++
+cmp [lineCount], 255
+jne nereikTvarkytiDidelioHex
+mov [lineCount], 0
+inc [lineCountH]
+nereikTvarkytiDidelioHex:
+inc [lineCount]
+; ---
+ret
 incLineNumber ENDP
-
-  ; --- jei lineCount=255 ir norim INC, reikia ji prilygint 0 ir lineCountH ++
-  cmp [lineCount], 255
-  jne nereikTvarkytiDidelioHex
-  mov [lineCount], 0
-  inc [lineCountH]
-  nereikTvarkytiDidelioHex:
-  inc [lineCount]
-  ; ---
-  ret
-
-end START
 
 
 com_unk PROC
@@ -291,6 +297,12 @@ com_unk:
  lea dx, HEX_Out
  int 21h
 
+	mov cx, 4
+	lea dx, spaceString
+	 mov bx, destFHandle
+	 mov ah, 40h
+
+	int 21h
 
  mov cx, 21
  mov ah, 40h
@@ -302,3 +314,5 @@ com_unk:
 
  ret
 com_unk ENDP
+
+end START

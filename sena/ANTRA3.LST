@@ -1,0 +1,1064 @@
+Turbo Assembler	 Version 3.2	    12/08/15 10:26:26	    Page 1
+antra3.ASM
+
+
+
+      1	0000			     .model small
+      2	0000			     .stack 100H
+      3
+      4	0000			     .data
+      5
+      6	0000  61 73 6D 20 74 6F	20+  apie		  db 'asm to html highlighter',13,10,9,'asm4html.exe [/?] sourceFile	    +
+      7	      68 74 6D 6C 20 68	69+  destinationFile',13,10,9,'asm4html.exe [/?] destinationFile',13,10,9,'/? -	pagalba',13,10,'$'
+      8	      67 68 6C 69 67 68	74+
+      9	      65 72 0D 0A 09 61	73+
+     10	      6D 34 68 74 6D 6C	2E+
+     11	      65 78 65 20 5B 2F	3F+
+     12	      5D 20 73 6F 75 72	63+
+     13	      65 46 69 6C 65 20	64+
+     14	      65 73 74 69 6E 61	74+
+     15	      69 6F 6E 46 69 6C	65+
+     16	      0D 0A 09 61 73 6D	34+
+     17	      68 74 6D 6C 2E 65	78+
+     18	      65 20 5B 2F 3F 5D	20+
+     19	      64 65 73 74 69 6E	61+
+     20	      74 69 6F 6E 46 69	6C+
+     21	      65 0D 0A 09 2F 3F	20+
+     22	      2D 20 70 61 67 61	6C+
+     23	      62 61 0D 0A 24
+     24	007C  53 6F 75 72 63 65	20+  err_s	    db 'Source failo nepavyko atidaryti	skaitymui',13,10,'$'
+     25	      66 61 69 6C 6F 20	6E+
+     26	      65 70 61 76 79 6B	6F+
+     27	      20 61 74 69 64 61	72+
+     28	      79 74 69 20 73 6B	61+
+     29	      69 74 79 6D 75 69	0D+
+     30	      0A 24
+     31	00A8  44 65 73 74 69 6E	61+  err_d		  db 'Destination failo	nepavyko atidaryti rasymui',13,10,'$'
+     32	      74 69 6F 6E 20 66	61+
+     33	      69 6C 6F 20 6E 65	70+
+     34	      61 76 79 6B 6F 20	61+
+     35	      74 69 64 61 72 79	74+
+     36	      69 20 72 61 73 79	6D+
+     37	      75 69 0D 0A 24
+     38
+     39	00D7  3C 21 44 4F 43 54	59+  html1			  db '<!DOCTYPE	html> <html>',13,'<head>',13,'<title> </title>',13, +
+     40	      50 45 20 68 74 6D	6C+  '</head>',13,'<body> <code>',13,10,'$'
+     41	      3E 20 3C 68 74 6D	6C+
+     42	      3E 0D 3C 68 65 61	64+
+     43	      3E 0D 3C 74 69 74	6C+
+     44	      65 3E 20 3C 2F 74	69+
+     45	      74 6C 65 3E 0D 3C	2F+
+     46	      68 65 61 64 3E 0D	3C+
+     47	      62 6F 64 79 3E 20	3C+
+     48	      63 6F 64 65 3E 0D	0A+
+     49	      24
+     50	011E  3C 2F 63 6F 64 65	3E+  html2	    db '</code>	</body>',13,'</html>',13
+     51	      20 3C 2F 62 6F 64	79+
+     52	      3E 0D 3C 2F 68 74	6D+
+     53	      6C 3E 0D
+     54	0136  61 78 20 62 78 20	64+  red				  db 'ax bx dx cx si di	es sp ah al bh bl dh dl	ds ', 13, 13
+     55	      78 20 63 78 20 73	69+
+     56	      20 64 69 20 65 73	20+
+     57	      73 70 20 61 68 20	61+
+Turbo Assembler	 Version 3.2	    12/08/15 10:26:26	    Page 2
+antra3.ASM
+
+
+
+     58	      6C 20 62 68 20 62	6C+
+     59	      20 64 68 20 64 6C	20+
+     60	      64 73 20 0D 0D
+     61	0165  63 6D 70 20 72 65	74+  orange	    db 'cmp ret	mov jmp	push lea pop int jmp call inc dec xor or and jne je jz jc   +
+     62	      20 6D 6F 76 20 6A	6D+  lodsb jl jg loop stosb ', 13, 13
+     63	      70 20 70 75 73 68	20+
+     64	      6C 65 61 20 70 6F	70+
+     65	      20 69 6E 74 20 6A	6D+
+     66	      70 20 63 61 6C 6C	20+
+     67	      69 6E 63 20 64 65	63+
+     68	      20 78 6F 72 20 6F	72+
+     69	      20 61 6E 64 20 6A	6E+
+     70	      65 20 6A 65 20 6A	7A+
+     71	      20 6A 63 20 6C 6F	64+
+     72	      73 62 20 6A 6C 20	6A+
+     73	      67 20 6C 6F 6F 70	20+
+     74	      73 74 6F 73 62 20	0D+
+     75	      0D
+     76	01C8  3C 62 72 3E	     newline		  db '<br>'
+     77	01CC  3C 63 6F 64 65 20	73+  commentD		  db '<code style=color:#B2B2B2>' ; dvigubos kabutes
+     78	      74 79 6C 65 3D 63	6F+
+     79	      6C 6F 72 3A 23 42	32+
+     80	      42 32 42 32 3E
+     81	01E6  3C 63 6F 64 65 20	73+  redD			  db '<code style=color:#9F3538>',59
+     82	      74 79 6C 65 3D 63	6F+
+     83	      6C 6F 72 3A 23 39	46+
+     84	      33 35 33 38 3E 3B
+     85	0201  3C 63 6F 64 65 20	73+  blueD			  db '<code style=color:#406C81>',59
+     86	      74 79 6C 65 3D 63	6F+
+     87	      6C 6F 72 3A 23 34	30+
+     88	      36 43 38 31 3E 3B
+     89	021C  3C 63 6F 64 65 20	73+  orangeD		  db '<code style=color:#CE6E2D>',59
+     90	      74 79 6C 65 3D 63	6F+
+     91	      6C 6F 72 3A 23 43	45+
+     92	      36 45 32 44 3E 3B
+     93	0237  3C 63 6F 64 65 20	73+  pinkD		    db '<code style=color:#A859F2>',59
+     94	      74 79 6C 65 3D 63	6F+
+     95	      6C 6F 72 3A 23 41	38+
+     96	      35 39 46 32 3E 3B
+     97	0252  3C 2F 63 6F 64 65	3E   endcodeD	    db '</code>'
+     98	0259  26 6C 74		     less			  db '&lt'
+     99	025C  26 67 74		     more			  db '&gt'
+    100
+    101	025F  14*(00)		     sourceF		  db 20	dup (0)
+    102	0273  ????		     sourceFHandle    dw ?
+    103
+    104	0275  14*(00)		     destF		  db 20	dup (0)
+    105	0289  ????		     destFHandle      dw ?
+    106
+    107	028B  14*(00)		     tempF	    db 20 dup (0)
+    108
+    109	029F  CA*(??)		     buffer	    db 202 dup (?)
+    110	0369  14*(00)		     wordB	    db 20 dup (0)
+    111	037D  00		     match	    db 0
+    112	037E  00		     temp	    db 0
+    113	037F  00		     simbolis	    db 0
+    114	0380  14*(24)		     buffD		    db 20 DUP("$")
+Turbo Assembler	 Version 3.2	    12/08/15 10:26:26	    Page 3
+antra3.ASM
+
+
+
+    115	0394  00		     color		  db 0	; 0 -raudona, 1	- zalia	2- geltona 3 - ruzavai
+    116	0395  00		     count	    db 0
+    117
+    118	0396  00		     bxFlag			      db 0
+    119	0397  00		     commentFlag      db 0
+    120	0398  00		     tagFlag		  db 0
+    121	0399  00		     numFlag	    db 0
+    122	039A  00		     oneFileFlag    db 0
+    123
+    124	039B			     .code
+    125
+    126	0000			     START:
+    127	0000  B8 0000s		     mov     ax, @data
+    128	0003  8E C0		     mov     es, ax		     ; es kad galetume naudot stosb funkcija: Store AL at address   +
+    129				     ES:(E)DI
+    130
+    131	0005  BE 0081		     mov     si, 81h		     ; programos paleidimo parametrai rasomi segmente es pradedant  +
+    132				     129 (arba 81h) baitu
+    133	0008  E8 02EA		     call skip_spaces
+    134
+    135	000B  BF 025Fr		     lea di, sourceF
+    136	000E  E8 02ED		     call read_filename
+    137	0011  BF 028Br		     lea di, tempF
+    138	0014  E8 02E7		     call read_filename
+    139	0017  26: 80 3E	028Br 24     cmp     byte ptr es:[tempF], '$' ;	ar tik vienas failas
+    140	001D  75 0C		     jne _01
+    141
+    142	001F  1E		     push ds
+    143	0020  B8 0000s		     mov     ax, @data
+    144	0023  8E D8		     mov     ds, ax
+    145	0025  C6 06 039Ar 01	     mov [oneFileFlag],	1
+    146	002A  1F		     pop ds
+    147
+    148	002B			     _01:
+    149
+    150	002B  BE 0081		     mov si, 81h
+    151	002E  E8 02C4		     call    skip_spaces
+    152
+    153	0031  8A 04		     mov     al, byte ptr ds:[si]    ; nuskaityti pirma	parametro simboli
+    154	0033  3C 0D		     cmp     al, 13		     ; jei nera	parametru
+    155	0035  75 03		     jne     _1
+    156	0037  E9 027B		     jmp     help		     ; tai isvesti pagalba
+    157	003A			     _1:
+    158
+    159				     ;;	ar reikia isvesti pagalba
+    160	003A  8B 04		     mov     ax, word ptr ds:[si]
+    161	003C  3D 3F2F		     cmp     ax, 3F2Fh		     ; jei nuskaityta "/?" - 3F	= '?'; 2F = '/'
+    162	003F  75 03		     jne     _2
+    163	0041  E9 0271		     jmp     help		     ; rastas "/?", vadinasi reikia isvesti pagalba
+    164	0044			     _2:
+    165
+    166
+    167				     ;;	TODO suzaist kai vieno nera!!!!----------------------------
+    168
+    169	0044  1E		     push ds
+    170	0045  B8 0000s		     mov     ax, @data
+    171	0048  8E D8		     mov     ds, ax
+Turbo Assembler	 Version 3.2	    12/08/15 10:26:26	    Page 4
+antra3.ASM
+
+
+
+    172
+    173	004A  8A 26 039Ar	     mov ah, [oneFileFlag]
+    174	004E  1F		     pop ds
+    175	004F  80 FC 01		     cmp ah, 1
+    176	0052  74 06		     je	tikDestination
+    177
+    178
+    179				     ;;	source failo pavadinimas
+    180	0054  BF 025Fr		     lea     di, sourceF
+    181	0057  E8 02A4		     call    read_filename	     ; perkelti	is parametro i eilute
+    182
+    183	005A			     tikDestination:
+    184
+    185				     ;;	destination failo pavadinimas
+    186	005A  BF 0275r		     lea     di, destF
+    187	005D  E8 029E		     call read_filename		     ; perkelti	is parametro i eilute
+    188	0060  26: 80 3E	0275r 24     cmp     byte ptr es:[destF], '$' ;	jei nieko nenuskaite
+    189	0066  75 03		     jne     _3
+    190	0068  E9 024A		     jmp     help
+    191	006B			     _3:
+    192
+    193	006B  1E		     push    ds	; duom is .data
+    194	006C  56		     push    si	; duom is komandine eilute
+    195
+    196	006D  B8 0000s		     mov     ax, @data
+    197	0070  8E D8		     mov     ds, ax
+    198
+    199				     ;;	rasymui
+    200	0072  BA 0275r		     mov     dx, offset	destF	     ; ikelti i	dx destF - failo pavadinima
+    201	0075  B4 3C		     mov     ah, 3ch		     ; isvalo/sukuria faila - komandos kodas
+    202	0077  B9 0000		     mov     cx, 0		     ; normal -	no attributes
+    203	007A  CD 21		     int     21h		     ; INT 21h / AH= 3Ch - create or truncate file.
+    204								     ;	 Jei nebus isvalytas - tai perrasines senaji,
+    205								     ;	 t.y. jei pries	tai buves failas ilgesnis - like simboliai  +
+    206				     isliks.
+    207
+    208	007C  73 03		     jnc     _4			     ; CF set on error AX = error code.
+    209	007E  E9 025E		     jmp     err_destination
+    210	0081			     _4:
+    211
+    212	0081  B4 3D		     mov     ah, 3dh		     ; atidaro faila - komandos	kodas
+    213	0083  B0 01		     mov     al, 1		     ; rasymui
+    214	0085  CD 21		     int     21h		     ; INT 21h / AH= 3Dh - open	existing file.
+    215	0087  73 03		     jnc     _5			     ; CF set on error AX = error code.
+    216	0089  E9 0253		     jmp     err_destination
+    217	008C			     _5:
+    218
+    219	008C  A3 0289r		     mov     destFHandle, ax	     ; issaugom	handle
+    220
+    221				     ; parasom pradzia i html ----
+    222	008F  8B 1E 0289r	     mov bx, destFHandle
+    223	0093  B9 0046		     mov cx, 70
+    224	0096  B4 40		     mov ah, 40h
+    225	0098  BA 00D7r		     mov dx, offset html1
+    226	009B  CD 21		     int 21h;
+    227				     ; ---------------------------
+    228
+Turbo Assembler	 Version 3.2	    12/08/15 10:26:26	    Page 5
+antra3.ASM
+
+
+
+    229	009D  C6 06 0396r 00	     mov [bxFlag], 0
+    230	00A2  C6 06 0397r 00	     mov [commentFlag],	0
+    231
+    232	00A7  8A 26 039Ar	     mov ah, [oneFileFlag]
+    233	00AB  80 FC 01		     cmp ah, 1
+    234	00AE  74 27		     je	startConvertingFromStdin
+    235
+    236	00B0			     startConverting:
+    237	00B0  BA 025Fr		     mov     dx, offset	sourceF	     ; failo pavadinimas
+    238	00B3  B4 3D		     mov     ah, 3dh		     ; atidaro faila - komandos	kodas
+    239	00B5  B0 00		     mov     al, 0		     ; 0 - reading, 1-writing, 2-abu
+    240	00B7  CD 21		     int     21h		     ; INT 21h / AH= 3Dh - open	existing file
+    241	00B9  72 06		     jc	     err_source		     ; CF set on error AX = error code.
+    242	00BB  A3 0273r		     mov     sourceFHandle, ax	     ; issaugojam filehandle
+    243	00BE  EB 1D 90		     jmp skaitom
+    244
+    245	00C1			     err_source:
+    246	00C1  B8 0000s		     mov     ax, @data
+    247	00C4  8E D8		     mov     ds, ax
+    248
+    249	00C6  BA 007Cr		     mov     dx, offset	err_s
+    250	00C9  B4 09		     mov     ah, 09h
+    251	00CB  CD 21		     int     21h
+    252
+    253	00CD  BA 025Fr		     mov     dx, offset	sourceF
+    254	00D0  CD 21		     int     21h
+    255
+    256	00D2  B8 4C01		     mov     ax, 4c01h
+    257	00D5  CD 21		     int     21h
+    258
+    259
+    260	00D7			     startConvertingFromStdin:
+    261	00D7  C7 06 0273r 0000	     mov     sourceFHandle, 0
+    262
+    263				     ;-----------------------SKAITOM---------------------------------
+    264
+    265	00DD			     skaitom:
+    266	00DD  E8 031B		     call inputConfig
+    267
+    268	00E0  8B C8		     mov     cx, ax				     ; bytes actually read
+    269	00E2  3D 0000		     cmp     ax, 0									     ; jei  +
+    270				     nenuskaite
+    271	00E5  75 0B		     jne     _6											    +
+    272				     ; tai ne pabaiga
+    273
+    274				     ;;;;; kai jau nebenuskaito	nieko
+    275	00E7  8B 1E 0273r	     mov     bx, sourceFHandle				     ; pabaiga skaitomo	failo
+    276	00EB  B4 3E		     mov     ah, 3eh								     ; uzdaryti
+    277	00ED  CD 21		     int     21h
+    278	00EF  E9 01D2		     jmp closeF
+    279
+    280	00F2			     _6:
+    281	00F2  BE 029Fr		     mov     si, offset	buffer				     ; skaitoma	is cia
+    282	00F5  8B 1E 0289r	     mov     bx, destFHandle				     ; rasoma i	cia
+    283
+    284	00F9  83 3E 0273r 00	     cmp     sourceFHandle, 0
+    285	00FE  75 08		     jne     _7
+Turbo Assembler	 Version 3.2	    12/08/15 10:26:26	    Page 6
+antra3.ASM
+
+
+
+    286	0100  80 3C 0D		     cmp     byte ptr ds:[si], 13
+    287	0103  75 03		     jne     _7
+    288	0105  E9 01BC		     jmp closeF
+    289
+    290	0108			     _7:
+    291
+    292	0108  A0 0396r		     mov al, [bxFlag]
+    293	010B  3C 00		     cmp al, 0
+    294	010D  74 04		     je	popint
+    295	010F  5B		     pop bx
+    296	0110  EB 09 90		     jmp atrenka
+    297
+    298
+    299	0113			     popint:
+    300	0113  BB 0000		     mov bx, 0
+    301	0116  C6 06 0396r 01	     mov [bxFlag], 1
+    302
+    303	011B			     atrenka:
+    304				     ;-----------------------ATRENKA---------------------------------
+    305	011B  AC		     lodsb			     ; Load byte at address DS:(E)SI into AL
+    306
+    307	011C  8A 26 0397r	     mov ah, [commentFlag]
+    308	0120  80 FC 00		     cmp ah, 0
+    309	0123  75 11		     jne cont13
+    310	0125  3C 3B		     cmp al, 59	; tikrinam del ';'
+    311	0127  75 0D		     jne cont13
+    312				     ; suradom ; ir pries tai nebuvo
+    313	0129  C6 06 0397r 01	     mov [commentFlag] , 1
+    314	012E  83 FB 00		     cmp bx, 0
+    315	0131  75 03		     jne cont13
+    316	0133  E8 02D4		     call printComment
+    317
+    318	0136			     cont13:
+    319
+    320	0136  3C 41		     cmp al, 41h	       ; compare al with "A"
+    321	0138  7C 25		     jl	next_char		; jump to next character if less
+    322	013A  3C 5A		     cmp al, 5Ah	       ; compare al with "Z"
+    323	013C  7E 08		     jle found_letter		; if al	is >= "A" && <=	"Z" -> found a letter
+    324	013E  3C 61		     cmp al, 61h	       ; compare al with "a"
+    325	0140  7C 1D		     jl	next_char		; jump to next character if less (since	it's between "Z" & "a")
+    326	0142  3C 7A		     cmp al, 7Ah	       ; compare al with "z"
+    327	0144  7F 19		     jg	next_char		; above	"Z" -> not a character
+    328	0146			     found_letter:
+    329
+    330	0146  50		     push ax
+    331	0147  A2 037Fr		     mov [simbolis], al
+    332	014A  8A 26 0397r	     mov ah, [commentFlag]
+    333	014E  80 FC 01		     cmp ah, 1
+    334	0151  58		     pop ax
+    335	0152  75 03		     jne forJump
+    336	0154  E9 00AC		     jmp cont1
+    337	0157			     forJump:
+    338
+    339	0157  88 87 0369r	     mov [wordB+bx], al
+    340	015B  43		     inc bx
+    341	015C  E9 00A7		     jmp cont2
+    342
+Turbo Assembler	 Version 3.2	    12/08/15 10:26:26	    Page 7
+antra3.ASM
+
+
+
+    343	015F			     next_char:
+    344	015F  8A 26 0397r	     mov ah, [commentFlag]
+    345	0163  80 FC 01		     cmp ah, 1
+    346	0166  74 28		     je	neskaicius
+    347
+    348				     ; jeigu _ tai pridedam pr zodzio
+    349	0168  3C 5F		     cmp al, 95
+    350	016A  74 DA		     je	found_letter
+    351
+    352				     ;tikrinam,	kad pirmas nebutu skaicius
+    353	016C  83 FB 00		     cmp bx, 0
+    354	016F  74 08		     je	neraide
+    355
+    356	0171  3C 30		     cmp al, 48		    ; compare
+    357	0173  7C 1B		     jl	neskaicius	; jump to next character if less
+    358	0175  3C 39		     cmp al, 57		    ; compare al
+    359	0177  7E CD		     jle found_letter
+    360
+    361
+    362	0179			     neraide:
+    363
+    364	0179  3C 30		     cmp al, 48		    ; compare al
+    365	017B  7C 13		     jl	neskaicius
+    366	017D  3C 39		     cmp al, 57		    ; compare al
+    367	017F  7E 03		     jle skaicius2
+    368	0181  EB 0D 90		     jmp neskaicius
+    369
+    370	0184			     skaicius2:
+    371	0184  C6 06 0399r 01	     mov [numFlag], 1
+    372	0189  C6 06 0394r 03	     mov [color], 3
+    373	018E  EB B6		     jmp found_letter
+    374
+    375	0190			     neskaicius:
+    376
+    377	0190  3C 3A		     cmp al, ':'
+    378	0192  75 17		     jne cont15
+    379	0194  88 87 0369r	     mov [wordB+bx], al
+    380	0198  C6 06 0398r 01	     mov [tagFlag], 1
+    381	019D  43		     inc bx
+    382	019E  C6 06 037Dr 01	     mov [match], 1
+    383	01A3  C6 06 0394r 01	     mov [color], 1
+    384	01A8  EB 15 90		     jmp checkRedReturn
+    385
+    386	01AB			     cont15:
+    387
+    388	01AB  A2 037Fr		     mov [simbolis], al
+    389	01AE  83 FB 00		     cmp bx, 0
+    390	01B1  74 50		     je	cont1
+    391
+    392	01B3  8A 26 0399r	     mov ah, [numFlag]
+    393	01B7  80 FC 01		     cmp ah, 1
+    394	01BA  74 0A		     je	printWithS
+    395
+    396				     ;kai reikia atpazinti zodi
+    397	01BC  EB 72 90		     jmp checkRed
+    398	01BF			     checkRedReturn:
+    399
+Turbo Assembler	 Version 3.2	    12/08/15 10:26:26	    Page 8
+antra3.ASM
+
+
+
+    400
+    401
+    402	01BF  80 3E 037Dr 01	     cmp match,1
+    403	01C4  75 2E		     jne cont8
+    404				     ;atspausdint zodi su apdorojimu
+    405	01C6			     printWithS:
+    406	01C6  E8 014C		     call printCodeWithSpan
+    407
+    408	01C9  3C 3B		     cmp al, 59
+    409	01CB  75 03		     jne skipprintcomment
+    410	01CD  E8 023A		     call printComment
+    411
+    412	01D0			     skipprintcomment:
+    413
+    414	01D0  C6 06 0399r 00	     mov [numFlag], 0
+    415	01D5  C6 06 0394r 00	     mov [color], 0
+    416
+    417	01DA  50		     push ax
+    418	01DB  A0 0398r		     mov al, [tagFlag]
+    419	01DE  80 3E 0398r 01	     cmp [tagFlag], 1
+    420	01E3  74 04		     je	cont19
+    421	01E5  58		     pop ax
+    422				     ;je cont16
+    423
+    424	01E6  E8 01A2		     call printSimbol
+    425				     ;print last simbol
+    426	01E9			     cont19:
+    427	01E9  C6 06 0398r 00	     mov [tagFlag], 0
+    428
+    429	01EE			     cont16:
+    430
+    431				     ;
+    432	01EE  BB 0000		     mov bx, 0
+    433	01F1  EB 0A 90		     jmp cont9
+    434
+    435	01F4			     cont8:
+    436				     ;atspausdinam zodi	paprastai
+    437	01F4  E8 017E		     call printCodeNoSpan
+    438	01F7  E8 0191		     call printSimbol
+    439
+    440				     ;print last simbol
+    441	01FA  BB 0000		     mov bx, 0
+    442
+    443	01FD			     cont9:
+    444	01FD  EB 1F 90		     jmp clearWordBuffer
+    445	0200			     afterClear:
+    446
+    447	0200  EB 04 90		     jmp cont2
+    448
+    449	0203			     cont1:
+    450				     ; cia atspausdint viena char (ne raide)
+    451	0203  E8 0185		     call printSimbol
+    452
+    453
+    454	0206			     cont2:
+    455	0206  C6 06 037Dr 00	     mov match,	0
+    456				     ; ------- loop atrenka
+Turbo Assembler	 Version 3.2	    12/08/15 10:26:26	    Page 9
+antra3.ASM
+
+
+
+    457				     ;loop   atrenka
+    458
+    459	020B  83 F9 00		     cmp cx, 0
+    460	020E  49		     dec cx
+    461	020F  74 03		     je	atrenkaBaige
+    462	0211  E9 FF07		     jmp atrenka
+    463
+    464	0214			     atrenkaBaige:
+    465
+    466	0214  53		     push bx
+    467
+    468				     ; ------- loop skaito
+    469	0215  83 F9 00		     cmp cx, 0
+    470	0218  49		     dec cx
+    471	0219  74 03		     je	skaitomBaige
+    472	021B  E9 FEBF		     jmp skaitom
+    473
+    474				     ;loop   skaitom
+    475
+    476	021E			     skaitomBaige:
+    477
+    478	021E			     clearWordBuffer:
+    479	021E  53		     push bx
+    480	021F  BB 0000		     mov bx, 0
+    481	0222			     loop1:
+    482	0222  C6 87 0369r 01	     mov [wordB+bx], 1
+    483	0227  43		     inc bx
+    484	0228  83 FB 14		     cmp bx, 20
+    485	022B  75 F5		     jne loop1
+    486	022D  5B		     pop bx
+    487	022E  EB D0		     jmp afterClear
+    488
+    489	0230			     checkRed:
+    490				     ;mov si, redD
+    491	0230  53		     push bx
+    492	0231  50		     push ax
+    493	0232  56		     push si
+    494	0233  C6 06 0395r 00	     mov [count], 0
+    495	0238  BE 0136r		     lea si, red
+    496	023B  C6 06 0394r 00	     mov [color], 0
+    497
+    498
+    499	0240			     checkloop:
+    500	0240  8A 26 0395r	     mov ah, [count]
+    501	0244  FE C4		     inc ah
+    502	0246  88 26 0395r	     mov [count],ah
+    503				     ;inc [count]
+    504
+    505				     ; pradzioj
+    506	024A  B8 0000		     mov ax, 0 ; syntaxes
+    507	024D  BB 0000		     mov bx, 0 ; bufferio
+    508
+    509
+    510				     ; tesiam lyginima
+    511	0250			     cont7:
+    512				     ; lyginam data buffer su syntax buffer
+    513
+Turbo Assembler	 Version 3.2	    12/08/15 10:26:26	    Page 10
+antra3.ASM
+
+
+
+    514	0250  8A 04		     mov al, [si]
+    515	0252  8A A7 0369r	     mov ah, [wordB+bx]
+    516	0256  3C 20		     cmp al, ' '
+    517	0258  74 06		     je	cont10
+    518	025A  38 87 0369r	     cmp [wordB+bx], al
+    519	025E  75 17		     jne cont5
+    520
+    521	0260			     cont10:
+    522				     ; lyginam ar sutampa zodziai (galas_)
+    523	0260  80 BF 0369r 01	     cmp [wordB+bx], 1
+    524	0265  75 0C		     jne cont6
+    525	0267  3C 20		     cmp al, ' '
+    526	0269  75 08		     jne cont6
+    527
+    528				     ; turim zodi
+    529	026B  C6 06 037Dr 01	     mov [match], 1
+    530
+    531	0270  EB 3D 90		     jmp exit5
+    532
+    533
+    534	0273			     cont6: ; jei dar ne pilnas	syntax zodis
+    535
+    536	0273  46		     inc si
+    537	0274  43		     inc bx
+    538	0275  EB D9		     jmp cont7 ; i tikrinimo pradzia, tesiam
+    539
+    540	0277			     cont5:
+    541
+    542	0277  BB 0000		     mov bx, 0
+    543
+    544	027A			     skipSpaces:
+    545	027A  3C 20		     cmp al, ' '
+    546	027C  74 09		     je	exit2
+    547	027E  3C 0D		     cmp al, 13
+    548	0280  74 0E		     je	exit4
+    549	0282  46		     inc si
+    550	0283  8A 04		     mov al, [si]
+    551	0285  EB F3		     jmp skipSpaces
+    552
+    553	0287			     exit2:
+    554	0287  46		     inc si
+    555	0288  8A 04		     mov al, [si]
+    556	028A  3C 0D		     cmp al, 13
+    557	028C  74 0A		     je	exit3
+    558	028E  EB C0		     jmp cont7
+    559	0290			     exit4:
+    560	0290  C6 06 037Dr 00	     mov [match], 0
+    561	0295  E9 FE70		     jmp _7
+    562
+    563	0298			     exit3:
+    564				     ;surade zodi
+    565
+    566	0298  C6 06 0394r 02	     mov [color], 2
+    567	029D  B8 0000		     mov ax, 0 ; syntaxes
+    568	02A0  BB 0000		     mov bx, 0 ; bufferio
+    569	02A3  BE 0165r		     lea si, orange
+    570	02A6  80 3E 0395r 02	     cmp [count],2
+Turbo Assembler	 Version 3.2	    12/08/15 10:26:26	    Page 11
+antra3.ASM
+
+
+
+    571	02AB  74 02		     je	exit5
+    572
+    573	02AD  EB 91		     jmp checkloop
+    574
+    575	02AF			     exit5:
+    576
+    577	02AF  5E		     pop si
+    578	02B0  58		     pop ax
+    579	02B1  5B		     pop bx
+    580
+    581	02B2  E9 FF0A		     jmp checkRedReturn
+    582
+    583	02B5			     help:
+    584	02B5  B8 0000s		     mov     ax, @data
+    585	02B8  8E D8		     mov     ds, ax
+    586
+    587	02BA  BA 0000r		     mov     dx, offset	apie
+    588	02BD  B4 09		     mov     ah, 09h
+    589	02BF  CD 21		     int     21h
+    590
+    591	02C1  EB 17 90		     jmp     _end
+    592
+    593	02C4			     closeF:
+    594				     ;;	uzdaryti dest
+    595	02C4  8B 1E 0289r	     mov bx, destFHandle
+    596	02C8  B4 40		     mov ah, 40h
+    597	02CA  B9 0010		     mov cx, 16
+    598	02CD  BA 011Er		     mov dx, offset html2
+    599	02D0  CD 21		     int 21h
+    600
+    601
+    602	02D2  B4 3E		     mov     ah, 3eh		     ; uzdaryti
+    603	02D4  8B 1E 0289r	     mov     bx, destFHandle
+    604	02D8  CD 21		     int     21h
+    605
+    606	02DA			     _end:
+    607	02DA  B8 4C00		     mov     ax, 4c00h
+    608	02DD  CD 21		     int     21h
+    609
+    610	02DF			     err_destination:
+    611	02DF  B8 0000s		     mov     ax, @data
+    612	02E2  8E D8		     mov     ds, ax
+    613
+    614	02E4  BA 00A8r		     mov     dx, offset	err_d
+    615	02E7  B4 09		     mov     ah, 09h
+    616	02E9  CD 21		     int     21h
+    617
+    618	02EB  BA 0275r		     mov     dx, offset	destF
+    619	02EE  CD 21		     int     21h
+    620
+    621	02F0  B8 4C02		     mov     ax, 4c02h
+    622	02F3  CD 21		     int     21h
+    623
+    624				     ;;	procedures --------------------------------------------
+    625
+    626	02F5			     skip_spaces PROC near
+    627	02F5			     skip_spaces_loop:
+Turbo Assembler	 Version 3.2	    12/08/15 10:26:26	    Page 12
+antra3.ASM
+
+
+
+    628	02F5  80 3C 20		     cmp byte ptr ds:[si], ' '
+    629	02F8  75 03		     jne skip_spaces_end
+    630	02FA  46		     inc si
+    631	02FB  EB F8		     jmp skip_spaces_loop
+    632	02FD			     skip_spaces_end:
+    633	02FD  C3		     ret
+    634	02FE			     skip_spaces ENDP
+    635
+    636	02FE			     read_filename PROC	near
+    637	02FE  50		     push    ax
+    638	02FF  E8 FFF3		     call    skip_spaces
+    639	0302			     read_filename_start:
+    640	0302  80 3C 0D		     cmp     byte ptr ds:[si], 13    ; jei nera	parametru
+    641	0305  74 05		     je	     read_filename_end	     ; tai taip, tai baigtas failo vedimas
+    642	0307  80 3C 20		     cmp     byte ptr ds:[si], ' '   ; jei tarpas
+    643	030A  75 05		     jne     read_filename_next	     ; tai praleisti visus tarpus, ir sokti prie kito parametro
+    644	030C			     read_filename_end:
+    645	030C  B0 24		     mov     al, '$'		     ; irasyti '$' gale
+    646	030E  AA		     stosb			     ; Store AL	at address ES:(E)DI, di	= di + 1
+    647	030F  58		     pop     ax
+    648	0310  C3		     ret
+    649	0311			     read_filename_next:
+    650	0311  AC		     lodsb			     ; uzkrauna	kita simboli
+    651	0312  AA		     stosb			     ; Store AL	at address ES:(E)DI, di	= di + 1
+    652	0313  EB ED		     jmp read_filename_start
+    653	0315			     read_filename ENDP
+    654
+    655	0315			     printCodeWithSpan PROC near
+    656	0315  51		     push cx
+    657	0316  50		     push ax
+    658	0317  53		     push bx
+    659	0318  53		     push bx
+    660
+    661
+    662	0319  A0 0394r		     mov al, [color]
+    663	031C  3C 00		     cmp al, 0
+    664	031E  74 1E		     je	raudonai
+    665
+    666	0320  3C 01		     cmp al, 1
+    667	0322  74 08		     je	melynai
+    668
+    669	0324  3C 02		     cmp al, 2
+    670	0326  74 0D		     je	oranzinei
+    671
+    672	0328  3C 03		     cmp al, 3
+    673	032A  74 1B		     je	ruzavai
+    674
+    675	032C			     melynai:
+    676	032C  BA 0201r		     mov dx, offset blueD
+    677	032F  B9 001A		     mov cx, 26
+    678	0332  EB 19 90		     jmp setDestination
+    679
+    680	0335			     oranzinei:
+    681	0335  BA 021Cr		     mov dx, offset orangeD
+    682	0338  B9 001A		     mov cx, 26
+    683	033B  EB 10 90		     jmp setDestination
+    684
+Turbo Assembler	 Version 3.2	    12/08/15 10:26:26	    Page 13
+antra3.ASM
+
+
+
+    685	033E			     raudonai:
+    686	033E  B9 001A		     mov cx, 26
+    687	0341  BA 01E6r		     mov dx, offset redD
+    688	0344  EB 07 90		     jmp setDestination
+    689
+    690	0347			     ruzavai:
+    691	0347  B9 001A		     mov cx, 26
+    692	034A  BA 0237r		     mov dx, offset pinkD
+    693
+    694
+    695	034D			     setDestination:
+    696	034D  8B 1E 0289r	     mov bx, destFHandle
+    697	0351  B4 40		     mov ah, 40h
+    698
+    699	0353  CD 21		     int 21h;
+    700
+    701	0355  5B		     pop bx
+    702	0356  8B CB		     mov cx, bx
+    703	0358  8B 1E 0289r	     mov bx, destFHandle
+    704	035C  B4 40		     mov ah, 40h
+    705	035E  BA 0369r		     mov dx, offset wordB
+    706	0361  CD 21		     int 21h;
+    707
+    708	0363  8B 1E 0289r	     mov bx, destFHandle
+    709	0367  B9 0007		     mov cx, 7
+    710	036A  B4 40		     mov ah, 40h
+    711	036C  BA 0252r		     mov dx, offset endcodeD
+    712	036F  CD 21		     int 21h;
+    713
+    714	0371  5B		     pop bx
+    715	0372  58		     pop ax
+    716	0373  59		     pop cx
+    717	0374  C3		     ret
+    718	0375			     printCodeWithSpan ENDP
+    719
+    720	0375			     printCodeNoSpan PROC near
+    721	0375  51		     push cx
+    722	0376  50		     push ax
+    723	0377  53		     push bx
+    724	0378  53		     push bx
+    725
+    726	0379  5B		     pop bx
+    727	037A  8B CB		     mov cx, bx
+    728	037C  8B 1E 0289r	     mov bx, destFHandle
+    729	0380  B4 40		     mov ah, 40h
+    730	0382  BA 0369r		     mov dx, offset wordB
+    731	0385  CD 21		     int 21h;
+    732
+    733	0387  5B		     pop bx
+    734	0388  58		     pop ax
+    735	0389  59		     pop cx
+    736	038A  C3		     ret
+    737	038B			     printCodeNoSpan ENDP
+    738
+    739	038B			     printSimbol PROC near
+    740	038B  51		     push cx
+    741	038C  50		     push ax
+Turbo Assembler	 Version 3.2	    12/08/15 10:26:26	    Page 14
+antra3.ASM
+
+
+
+    742	038D  53		     push bx
+    743
+    744	038E  A0 037Fr		     mov al, [simbolis]
+    745	0391  3C 0A		     cmp al, 10
+    746	0393  75 2A		     jne cont11
+    747
+    748	0395  8A 26 0397r	     mov ah, [commentFlag]
+    749	0399  80 FC 01		     cmp ah, 1
+    750	039C  75 13		     jne cont14
+    751
+    752	039E  B9 0007		     mov cx, 7
+    753	03A1  B4 40		     mov     ah, 40h
+    754	03A3  8B 1E 0289r	     mov bx, destFHandle
+    755	03A7  BA 0252r		     lea dx, endcodeD
+    756	03AA  CD 21		     int 21h
+    757
+    758	03AC  C6 06 0397r 00	     mov [commentFlag],	0
+    759
+    760	03B1			     cont14:
+    761
+    762	03B1  B9 0004		     mov cx, 4
+    763	03B4  B4 40		     mov     ah, 40h
+    764	03B6  8B 1E 0289r	     mov bx, destFHandle
+    765	03BA  BA 01C8r		     lea dx, newline
+    766	03BD  CD 21		     int 21h
+    767
+    768	03BF			     cont11:
+    769
+    770
+    771	03BF  3C 3C		     cmp al, 60
+    772	03C1  75 11		     jne cont17
+    773
+    774	03C3  8B 1E 0289r	     mov bx, destFHandle
+    775	03C7  B9 0003		     mov cx, 3
+    776	03CA  BA 0259r		     lea dx, less
+    777	03CD  B4 40		     mov     ah, 40h		     ; INT 21h / AH= 40h - write to file
+    778	03CF  CD 21		     int     21h
+    779	03D1  EB 24 90		     jmp pabaiga2
+    780
+    781
+    782	03D4			     cont17:
+    783
+    784	03D4  3C 3E		     cmp al, 62
+    785	03D6  75 11		     jne cont18
+    786
+    787	03D8  8B 1E 0289r	     mov bx, destFHandle
+    788	03DC  B9 0003		     mov cx, 3
+    789	03DF  BA 025Cr		     lea dx, more
+    790	03E2  B4 40		     mov     ah, 40h		     ; INT 21h / AH= 40h - write to file
+    791	03E4  CD 21		     int     21h
+    792	03E6  EB 0F 90		     jmp pabaiga2
+    793
+    794
+    795
+    796	03E9			     cont18:
+    797
+    798	03E9  8B 1E 0289r	     mov bx, destFHandle
+Turbo Assembler	 Version 3.2	    12/08/15 10:26:26	    Page 15
+antra3.ASM
+
+
+
+    799	03ED  B9 0001		     mov cx, 1
+    800	03F0  BA 037Fr		     lea dx, [simbolis]
+    801	03F3  B4 40		     mov     ah, 40h		     ; INT 21h / AH= 40h - write to file
+    802	03F5  CD 21		     int     21h
+    803
+    804	03F7			     pabaiga2:
+    805	03F7  5B		     pop bx
+    806	03F8  58		     pop ax
+    807	03F9  59		     pop cx
+    808	03FA  C3		     ret
+    809	03FB			     printSimbol ENDP
+    810
+    811	03FB			     inputConfig PROC near
+    812	03FB  8B 1E 0273r	     mov     bx, sourceFHandle
+    813	03FF  BA 029Fr		     mov     dx, offset	buffer	     ; address of buffer in dx
+    814	0402  B9 0064		     mov     cx, 100					     ; kiek baitu nuskaitysim
+    815	0405  B4 3F		     mov     ah, 3fh					     ; function	3Fh - read from	file
+    816	0407  CD 21		     int     21h
+    817	0409  C3		     ret
+    818	040A			     inputConfig ENDP
+    819
+    820	040A			     printComment PROC near
+    821	040A  51		     push cx
+    822	040B  50		     push ax
+    823	040C  53		     push bx
+    824
+    825	040D  C6 06 0399r 00	     mov [numFlag], 0
+    826	0412  8B 1E 0289r	     mov bx, destFHandle
+    827	0416  B9 001A		     mov cx, 26
+    828	0419  B4 40		     mov ah, 40h
+    829	041B  BA 01CCr		     mov dx, offset commentD
+    830	041E  CD 21		     int 21h;
+    831
+    832	0420  5B		     pop bx
+    833	0421  58		     pop ax
+    834	0422  59		     pop cx
+    835	0423  C3		     ret
+    836	0424			     printComment ENDP
+    837
+    838				     end START
+Turbo Assembler	 Version 3.2	    12/08/15 10:26:26	    Page 16
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "12/08/15"
+??FILENAME			  Text	 "antra3  "
+??TIME				  Text	 "10:26:26"
+??VERSION			  Number 0314
+@32BIT				  Text	 0
+@CODE				  Text	 _TEXT
+@CODESIZE			  Text	 0
+@CPU				  Text	 0101H
+@CURSEG				  Text	 _TEXT
+@DATA				  Text	 DGROUP
+@DATASIZE			  Text	 0
+@FILENAME			  Text	 ANTRA3
+@INTERFACE			  Text	 00H
+@MODEL				  Text	 2
+@STACK				  Text	 DGROUP
+@WORDSIZE			  Text	 2
+AFTERCLEAR			  Near	 _TEXT:0200
+APIE				  Byte	 DGROUP:0000
+ATRENKA				  Near	 _TEXT:011B
+ATRENKABAIGE			  Near	 _TEXT:0214
+BLUED				  Byte	 DGROUP:0201
+BUFFD				  Byte	 DGROUP:0380
+BUFFER				  Byte	 DGROUP:029F
+BXFLAG				  Byte	 DGROUP:0396
+CHECKLOOP			  Near	 _TEXT:0240
+CHECKRED			  Near	 _TEXT:0230
+CHECKREDRETURN			  Near	 _TEXT:01BF
+CLEARWORDBUFFER			  Near	 _TEXT:021E
+CLOSEF				  Near	 _TEXT:02C4
+COLOR				  Byte	 DGROUP:0394
+COMMENTD			  Byte	 DGROUP:01CC
+COMMENTFLAG			  Byte	 DGROUP:0397
+CONT1				  Near	 _TEXT:0203
+CONT10				  Near	 _TEXT:0260
+CONT11				  Near	 _TEXT:03BF
+CONT13				  Near	 _TEXT:0136
+CONT14				  Near	 _TEXT:03B1
+CONT15				  Near	 _TEXT:01AB
+CONT16				  Near	 _TEXT:01EE
+CONT17				  Near	 _TEXT:03D4
+CONT18				  Near	 _TEXT:03E9
+CONT19				  Near	 _TEXT:01E9
+CONT2				  Near	 _TEXT:0206
+CONT5				  Near	 _TEXT:0277
+CONT6				  Near	 _TEXT:0273
+CONT7				  Near	 _TEXT:0250
+CONT8				  Near	 _TEXT:01F4
+CONT9				  Near	 _TEXT:01FD
+COUNT				  Byte	 DGROUP:0395
+DESTF				  Byte	 DGROUP:0275
+DESTFHANDLE			  Word	 DGROUP:0289
+ENDCODED			  Byte	 DGROUP:0252
+ERR_D				  Byte	 DGROUP:00A8
+ERR_DESTINATION			  Near	 _TEXT:02DF
+Turbo Assembler	 Version 3.2	    12/08/15 10:26:26	    Page 17
+Symbol Table
+
+
+
+ERR_S				  Byte	 DGROUP:007C
+ERR_SOURCE			  Near	 _TEXT:00C1
+EXIT2				  Near	 _TEXT:0287
+EXIT3				  Near	 _TEXT:0298
+EXIT4				  Near	 _TEXT:0290
+EXIT5				  Near	 _TEXT:02AF
+FORJUMP				  Near	 _TEXT:0157
+FOUND_LETTER			  Near	 _TEXT:0146
+HELP				  Near	 _TEXT:02B5
+HTML1				  Byte	 DGROUP:00D7
+HTML2				  Byte	 DGROUP:011E
+INPUTCONFIG			  Near	 _TEXT:03FB
+LESS				  Byte	 DGROUP:0259
+LOOP1				  Near	 _TEXT:0222
+MATCH				  Byte	 DGROUP:037D
+MELYNAI				  Near	 _TEXT:032C
+MORE				  Byte	 DGROUP:025C
+NERAIDE				  Near	 _TEXT:0179
+NESKAICIUS			  Near	 _TEXT:0190
+NEWLINE				  Byte	 DGROUP:01C8
+NEXT_CHAR			  Near	 _TEXT:015F
+NUMFLAG				  Byte	 DGROUP:0399
+ONEFILEFLAG			  Byte	 DGROUP:039A
+ORANGE				  Byte	 DGROUP:0165
+ORANGED				  Byte	 DGROUP:021C
+ORANZINEI			  Near	 _TEXT:0335
+PABAIGA2			  Near	 _TEXT:03F7
+PINKD				  Byte	 DGROUP:0237
+POPINT				  Near	 _TEXT:0113
+PRINTCODENOSPAN			  Near	 _TEXT:0375
+PRINTCODEWITHSPAN		  Near	 _TEXT:0315
+PRINTCOMMENT			  Near	 _TEXT:040A
+PRINTSIMBOL			  Near	 _TEXT:038B
+PRINTWITHS			  Near	 _TEXT:01C6
+RAUDONAI			  Near	 _TEXT:033E
+READ_FILENAME			  Near	 _TEXT:02FE
+READ_FILENAME_END		  Near	 _TEXT:030C
+READ_FILENAME_NEXT		  Near	 _TEXT:0311
+READ_FILENAME_START		  Near	 _TEXT:0302
+RED				  Byte	 DGROUP:0136
+REDD				  Byte	 DGROUP:01E6
+RUZAVAI				  Near	 _TEXT:0347
+SETDESTINATION			  Near	 _TEXT:034D
+SIMBOLIS			  Byte	 DGROUP:037F
+SKAICIUS2			  Near	 _TEXT:0184
+SKAITOM				  Near	 _TEXT:00DD
+SKAITOMBAIGE			  Near	 _TEXT:021E
+SKIPPRINTCOMMENT		  Near	 _TEXT:01D0
+SKIPSPACES			  Near	 _TEXT:027A
+SKIP_SPACES			  Near	 _TEXT:02F5
+SKIP_SPACES_END			  Near	 _TEXT:02FD
+SKIP_SPACES_LOOP		  Near	 _TEXT:02F5
+SOURCEF				  Byte	 DGROUP:025F
+SOURCEFHANDLE			  Word	 DGROUP:0273
+START				  Near	 _TEXT:0000
+STARTCONVERTING			  Near	 _TEXT:00B0
+STARTCONVERTINGFROMSTDIN	  Near	 _TEXT:00D7
+Turbo Assembler	 Version 3.2	    12/08/15 10:26:26	    Page 18
+Symbol Table
+
+
+
+TAGFLAG				  Byte	 DGROUP:0398
+TEMP				  Byte	 DGROUP:037E
+TEMPF				  Byte	 DGROUP:028B
+TIKDESTINATION			  Near	 _TEXT:005A
+WORDB				  Byte	 DGROUP:0369
+_01				  Near	 _TEXT:002B
+_1				  Near	 _TEXT:003A
+_2				  Near	 _TEXT:0044
+_3				  Near	 _TEXT:006B
+_4				  Near	 _TEXT:0081
+_5				  Near	 _TEXT:008C
+_6				  Near	 _TEXT:00F2
+_7				  Near	 _TEXT:0108
+_END				  Near	 _TEXT:02DA
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+DGROUP				  Group
+  STACK				  16  0100 Para	  Stack	  STACK
+  _DATA				  16  039B Word	  Public  DATA
+_TEXT				  16  0424 Word	  Public  CODE
+

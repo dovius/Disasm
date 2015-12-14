@@ -1,0 +1,759 @@
+<!DOCTYPE html> <html><head><title> </title></head><body> <code><pre>
+.model small<br>
+.stack <code style=color:#A859F2>100H</code><br>
+<br>
+.data<br>
+<br>
+apie    	     db 'asm to html highlighter',<code style=color:#A859F2>13</code>,<code style=color:#A859F2>10</code>,<code style=color:#A859F2>9</code>,'asm4html.exe [/?] sourceFile destinationFile',<code style=color:#A859F2>13</code>,<code style=color:#A859F2>10</code>,<code style=color:#A859F2>9</code>,'asm4html.exe [/?] destinationFile',<code style=color:#A859F2>13</code>,<code style=color:#A859F2>10</code>,<code style=color:#A859F2>9</code>,'/? - pagalba',<code style=color:#A859F2>13</code>,<code style=color:#A859F2>10</code>,'$'<br>
+err_s          db 'Source failo nepavyko atidaryti skaitymui',<code style=color:#A859F2>13</code>,<code style=color:#A859F2>10</code>,'$'<br>
+err_d    	     db 'Destination failo nepavyko atidaryti rasymui',<code style=color:#A859F2>13</code>,<code style=color:#A859F2>10</code>,'$'<br>
+<br>
+html1			     db '&lt!DOCTYPE html&gt &lthtml&gt',<code style=color:#A859F2>13</code>,'&lthead&gt',<code style=color:#A859F2>13</code>,'&lttitle&gt &lt/title&gt',<code style=color:#A859F2>13</code>,'&lt/head&gt',<code style=color:#A859F2>13</code>,'&ltbody&gt &ltcode&gt',<code style=color:#A859F2>13</code>,<code style=color:#A859F2>10</code>,'$'<br>
+html2          db '&lt/code&gt &lt/body&gt',<code style=color:#A859F2>13</code>,'&lt/html&gt',<code style=color:#A859F2>13</code><br>
+red				     db '<code style=color:#9F3538>ax</code> <code style=color:#9F3538>bx</code> <code style=color:#9F3538>dx</code> <code style=color:#9F3538>cx</code> <code style=color:#9F3538>si</code> <code style=color:#9F3538>di</code> <code style=color:#9F3538>es</code> <code style=color:#9F3538>sp</code> <code style=color:#9F3538>ah</code> <code style=color:#9F3538>al</code> <code style=color:#9F3538>bh</code> <code style=color:#9F3538>bl</code> <code style=color:#9F3538>dh</code> <code style=color:#9F3538>dl</code> <code style=color:#9F3538>ds</code> ', <code style=color:#A859F2>13</code>, <code style=color:#A859F2>13</code><br>
+orange         db '<code style=color:#CE6E2D>cmp</code> <code style=color:#CE6E2D>ret</code> <code style=color:#CE6E2D>mov</code> <code style=color:#CE6E2D>jmp</code> <code style=color:#CE6E2D>push</code> <code style=color:#CE6E2D>lea</code> <code style=color:#CE6E2D>pop</code> <code style=color:#CE6E2D>int</code> <code style=color:#CE6E2D>jmp</code> <code style=color:#CE6E2D>call</code> <code style=color:#CE6E2D>inc</code> <code style=color:#CE6E2D>dec</code> <code style=color:#CE6E2D>xor</code> <code style=color:#CE6E2D>or</code> <code style=color:#CE6E2D>and</code> <code style=color:#CE6E2D>jne</code> <code style=color:#CE6E2D>je</code> <code style=color:#CE6E2D>jz</code> <code style=color:#CE6E2D>jc</code> <code style=color:#CE6E2D>lodsb</code> <code style=color:#CE6E2D>jl</code> <code style=color:#CE6E2D>jg</code> <code style=color:#CE6E2D>loop</code> <code style=color:#CE6E2D>stosb</code> ', <code style=color:#A859F2>13</code>, <code style=color:#A859F2>13</code><br>
+newline 	     db '&ltbr&gt'<br>
+commentD 	     db '&ltcode style=<code style=color:#406C81>color:</code>#B2B2B2&gt' <code style=color:#B2B2B2>; dvigubos kabutes</code><br>
+redD		 	     db '&ltcode style=<code style=color:#406C81>color:</code>#<code style=color:#A859F2>9F3538</code>&gt',<code style=color:#A859F2>59</code><br>
+blueD		 	     db '&ltcode style=<code style=color:#406C81>color:</code>#<code style=color:#A859F2>406C81</code>&gt',<code style=color:#A859F2>59</code><br>
+orangeD	 	     db '&ltcode style=<code style=color:#406C81>color:</code>#CE6E2D&gt',<code style=color:#A859F2>59</code><br>
+pinkD	 	       db '&ltcode style=<code style=color:#406C81>color:</code>#A859F2&gt',<code style=color:#A859F2>59</code><br>
+endcodeD       db '&lt/code&gt'<br>
+less			     db '&lt'<br>
+more			     db '&gt'<br>
+<br>
+sourceF  	     db <code style=color:#A859F2>20</code> dup (<code style=color:#A859F2>0</code>)<br>
+sourceFHandle	 dw ?<br>
+<br>
+destF   	     db <code style=color:#A859F2>20</code> dup (<code style=color:#A859F2>0</code>)<br>
+destFHandle 	 dw ?<br>
+<br>
+tempF          db <code style=color:#A859F2>20</code> dup (<code style=color:#A859F2>0</code>)<br>
+<br>
+buffer         db <code style=color:#A859F2>202</code> dup (?)<br>
+wordB          db <code style=color:#A859F2>20</code> dup (<code style=color:#A859F2>0</code>)<br>
+match          db <code style=color:#A859F2>0</code><br>
+temp           db <code style=color:#A859F2>0</code><br>
+simbolis       db <code style=color:#A859F2>0</code><br>
+buffD		       db <code style=color:#A859F2>20</code> DUP("$")<br>
+color 		     db <code style=color:#A859F2>0</code>  <code style=color:#B2B2B2>; 0 -raudona, 1 - zalia 2- geltona 3 - ruzavai</code><br>
+count          db <code style=color:#A859F2>0</code><br>
+<br>
+bxFlag   			 db <code style=color:#A859F2>0</code><br>
+commentFlag 	 db <code style=color:#A859F2>0</code><br>
+tagFlag 	     db <code style=color:#A859F2>0</code><br>
+numFlag        db <code style=color:#A859F2>0</code><br>
+oneFileFlag    db <code style=color:#A859F2>0</code><br>
+<br>
+.code<br>
+<br>
+<code style=color:#406C81>START:</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ax</code>, @data<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>es</code>, <code style=color:#9F3538>ax</code>			<code style=color:#B2B2B2>; es kad galetume naudot stosb funkcija<code style=color:#406C81>:</code> Store AL at address ES<code style=color:#406C81>:</code>(E)DI</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>si</code>, <code style=color:#A859F2>81h</code>        		<code style=color:#B2B2B2>; programos paleidimo parametrai rasomi segmente es pradedant 129 (arba 81h) baitu</code><br>
+<code style=color:#CE6E2D>call</code> skip_spaces<br>
+<br>
+<code style=color:#CE6E2D>lea</code> <code style=color:#9F3538>di</code>, sourceF<br>
+<code style=color:#CE6E2D>call</code> read_filename<br>
+<code style=color:#CE6E2D>lea</code> <code style=color:#9F3538>di</code>, tempF<br>
+<code style=color:#CE6E2D>call</code> read_filename<br>
+<code style=color:#CE6E2D>cmp</code>	byte ptr <code style=color:#406C81>es:</code>[tempF], '$' <code style=color:#B2B2B2>; ar tik vienas failas</code><br>
+<code style=color:#CE6E2D>jne</code> _01<br>
+<br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>ds</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ax</code>, @data<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ds</code>, <code style=color:#9F3538>ax</code><br>
+<code style=color:#CE6E2D>mov</code> [oneFileFlag], <code style=color:#A859F2>1</code><br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>ds</code><br>
+<br>
+<code style=color:#406C81>_01:</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>si</code>, <code style=color:#A859F2>81h</code><br>
+<code style=color:#CE6E2D>call</code>	skip_spaces<br>
+<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>al</code>, byte ptr <code style=color:#406C81>ds:</code>[<code style=color:#9F3538>si</code>]	<code style=color:#B2B2B2>; nuskaityti pirma parametro simboli</code><br>
+<code style=color:#CE6E2D>cmp</code>	<code style=color:#9F3538>al</code>, <code style=color:#A859F2>13</code>			<code style=color:#B2B2B2>; jei nera parametru</code><br>
+<code style=color:#CE6E2D>jne</code>	_1<br>
+<code style=color:#CE6E2D>jmp</code>	help			<code style=color:#B2B2B2>; tai isvesti pagalba</code><br>
+<code style=color:#406C81>_1:</code><br>
+<br>
+<code style=color:#B2B2B2>;; ar reikia isvesti pagalba</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ax</code>, word ptr <code style=color:#406C81>ds:</code>[<code style=color:#9F3538>si</code>]<br>
+<code style=color:#CE6E2D>cmp</code>	<code style=color:#9F3538>ax</code>, <code style=color:#A859F2>3F2Fh</code>        	<code style=color:#B2B2B2>; jei nuskaityta "/?" - 3F = '?'; 2F = '/'</code><br>
+<code style=color:#CE6E2D>jne</code>	_2<br>
+<code style=color:#CE6E2D>jmp</code>	help                 	<code style=color:#B2B2B2>; rastas "/?", vadinasi reikia isvesti pagalba</code><br>
+<code style=color:#406C81>_2:</code><br>
+<br>
+<br>
+<code style=color:#B2B2B2>;; TODO suzaist kai vieno nera!!!!----------------------------</code><br>
+<br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>ds</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ax</code>, @data<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ds</code>, <code style=color:#9F3538>ax</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>ah</code>, [oneFileFlag]<br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>ds</code><br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>ah</code>, <code style=color:#A859F2>1</code><br>
+<code style=color:#CE6E2D>je</code> tikDestination<br>
+<br>
+<br>
+<code style=color:#B2B2B2>;; source failo pavadinimas</code><br>
+<code style=color:#CE6E2D>lea</code>	<code style=color:#9F3538>di</code>, sourceF<br>
+<code style=color:#CE6E2D>call</code>	read_filename		<code style=color:#B2B2B2>; perkelti is parametro i eilute</code><br>
+<br>
+<code style=color:#406C81>tikDestination:</code><br>
+<br>
+<code style=color:#B2B2B2>;; destination failo pavadinimas</code><br>
+<code style=color:#CE6E2D>lea</code>	<code style=color:#9F3538>di</code>, destF<br>
+<code style=color:#CE6E2D>call</code> read_filename		<code style=color:#B2B2B2>; perkelti is parametro i eilute</code><br>
+<code style=color:#CE6E2D>cmp</code>	byte ptr <code style=color:#406C81>es:</code>[destF], '$' <code style=color:#B2B2B2>; jei nieko nenuskaite</code><br>
+<code style=color:#CE6E2D>jne</code>	_3<br>
+<code style=color:#CE6E2D>jmp</code>	help<br>
+<code style=color:#406C81>_3:</code><br>
+<br>
+<code style=color:#CE6E2D>push</code>	<code style=color:#9F3538>ds</code> <code style=color:#B2B2B2>; duom is .data</code><br>
+<code style=color:#CE6E2D>push</code>	<code style=color:#9F3538>si</code> <code style=color:#B2B2B2>; duom is komandine eilute</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ax</code>, @data<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ds</code>, <code style=color:#9F3538>ax</code><br>
+<br>
+<code style=color:#B2B2B2>;; rasymui</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>dx</code>, offset destF	<code style=color:#B2B2B2>; ikelti i dx destF - failo pavadinima</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ah</code>, <code style=color:#A859F2>3ch</code>			<code style=color:#B2B2B2>; isvalo/sukuria faila - komandos kodas</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>cx</code>, <code style=color:#A859F2>0</code>			<code style=color:#B2B2B2>; normal - no attributes</code><br>
+<code style=color:#CE6E2D>int</code>	<code style=color:#A859F2>21h</code>			<code style=color:#B2B2B2>; INT 21h / AH= 3Ch - create or truncate file.</code><br>
+				<code style=color:#B2B2B2>;   Jei nebus isvalytas - tai perrasines senaji,</code><br>
+				<code style=color:#B2B2B2>;   t.y. jei pries tai buves failas ilgesnis - like simboliai isliks.</code><br>
+<br>
+jnc	_4			<code style=color:#B2B2B2>; CF set on error AX = error code.</code><br>
+<code style=color:#CE6E2D>jmp</code>	err_destination<br>
+<code style=color:#406C81>_4:</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ah</code>, <code style=color:#A859F2>3dh</code>			<code style=color:#B2B2B2>; atidaro faila - komandos kodas</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>al</code>, <code style=color:#A859F2>1</code>			<code style=color:#B2B2B2>; rasymui</code><br>
+<code style=color:#CE6E2D>int</code>	<code style=color:#A859F2>21h</code>			<code style=color:#B2B2B2>; INT 21h / AH= 3Dh - open existing file.</code><br>
+jnc	_5			<code style=color:#B2B2B2>; CF set on error AX = error code.</code><br>
+<code style=color:#CE6E2D>jmp</code>	err_destination<br>
+<code style=color:#406C81>_5:</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code>	destFHandle, <code style=color:#9F3538>ax</code>		<code style=color:#B2B2B2>; issaugom handle</code><br>
+<br>
+<code style=color:#B2B2B2>; parasom pradzia i html ----</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>bx</code>, destFHandle<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>cx</code>, <code style=color:#A859F2>70</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>ah</code>, <code style=color:#A859F2>40h</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>dx</code>, offset html1<br>
+<code style=color:#CE6E2D>int</code> <code style=color:#A859F2>21h</code><code style=color:#B2B2B2>;</code><br>
+<code style=color:#B2B2B2>; ---------------------------</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code> [bxFlag], <code style=color:#A859F2>0</code><br>
+<code style=color:#CE6E2D>mov</code> [commentFlag], <code style=color:#A859F2>0</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>ah</code>, [oneFileFlag]<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>ah</code>, <code style=color:#A859F2>1</code><br>
+<code style=color:#CE6E2D>je</code> startConvertingFromS d
+n<br>
+<br>
+<code style=color:#406C81>startConverting:</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>dx</code>, offset sourceF	<code style=color:#B2B2B2>; failo pavadinimas</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ah</code>, <code style=color:#A859F2>3dh</code>                	<code style=color:#B2B2B2>; atidaro faila - komandos kodas</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>al</code>, <code style=color:#A859F2>0</code>                  	<code style=color:#B2B2B2>; 0 - reading, 1-writing, 2-abu</code><br>
+<code style=color:#CE6E2D>int</code>	<code style=color:#A859F2>21h</code>			<code style=color:#B2B2B2>; INT 21h / AH= 3Dh - open existing file</code><br>
+<code style=color:#CE6E2D>jc</code>	err_source		<code style=color:#B2B2B2>; CF set on error AX = error code.</code><br>
+<code style=color:#CE6E2D>mov</code>	sourceFHandle, <code style=color:#9F3538>ax</code>	<code style=color:#B2B2B2>; issaugojam filehandle</code><br>
+<code style=color:#CE6E2D>jmp</code> skaitom<br>
+<br>
+<code style=color:#406C81>err_source:</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ax</code>, @data<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ds</code>, <code style=color:#9F3538>ax</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>dx</code>, offset err_s<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ah</code>, <code style=color:#A859F2>09h</code><br>
+<code style=color:#CE6E2D>int</code>	<code style=color:#A859F2>21h</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>dx</code>, offset sourceF<br>
+<code style=color:#CE6E2D>int</code>	<code style=color:#A859F2>21h</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ax</code>, <code style=color:#A859F2>4c01h</code><br>
+<code style=color:#CE6E2D>int</code>	<code style=color:#A859F2>21h</code><br>
+<br>
+<br>
+<code style=color:#406C81>startConvertingFromSdnn:</code><br>
+<code style=color:#CE6E2D>mov</code>	sourceFHandle, <code style=color:#A859F2>0</code><br>
+<br>
+<code style=color:#B2B2B2>;-----------------------SKAITOM---------------------------------</code><br>
+<br>
+<code style=color:#406C81>skaitom:</code><br>
+<code style=color:#CE6E2D>call</code> inputConfig<br>
+<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>cx</code>, <code style=color:#9F3538>ax</code>    			      	<code style=color:#B2B2B2>; bytes actually read</code><br>
+<code style=color:#CE6E2D>cmp</code>	<code style=color:#9F3538>ax</code>, <code style=color:#A859F2>0</code>										<code style=color:#B2B2B2>; jei nenuskaite</code><br>
+<code style=color:#CE6E2D>jne</code>	_6											<code style=color:#B2B2B2>; tai ne pabaiga</code><br>
+<br>
+<code style=color:#B2B2B2>;;;;; kai jau nebenuskaito nieko</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>bx</code>, sourceFHandle				<code style=color:#B2B2B2>; pabaiga skaitomo failo</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ah</code>, <code style=color:#A859F2>3eh</code>									<code style=color:#B2B2B2>; uzdaryti</code><br>
+<code style=color:#CE6E2D>int</code>	<code style=color:#A859F2>21h</code><br>
+<code style=color:#CE6E2D>jmp</code> closeF<br>
+<br>
+<code style=color:#406C81>_6:</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>si</code>, offset buffer				<code style=color:#B2B2B2>; skaitoma is cia</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>bx</code>, destFHandle					<code style=color:#B2B2B2>; rasoma i cia</code><br>
+<br>
+<code style=color:#CE6E2D>cmp</code>	sourceFHandle, <code style=color:#A859F2>0</code><br>
+<code style=color:#CE6E2D>jne</code>	_7<br>
+<code style=color:#CE6E2D>cmp</code>	byte ptr <code style=color:#406C81>ds:</code>[<code style=color:#9F3538>si</code>], <code style=color:#A859F2>13</code><br>
+<code style=color:#CE6E2D>jne</code>	_7<br>
+<code style=color:#CE6E2D>jmp</code> closeF<br>
+<br>
+<code style=color:#406C81>_7:</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>al</code>, [bxFlag]<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>0</code><br>
+<code style=color:#CE6E2D>je</code> popint<br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>bx</code><br>
+<code style=color:#CE6E2D>jmp</code> atrenka<br>
+<br>
+<br>
+<code style=color:#406C81>popint:</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>bx</code>, <code style=color:#A859F2>0</code><br>
+<code style=color:#CE6E2D>mov</code> [bxFlag], <code style=color:#A859F2>1</code><br>
+<br>
+<code style=color:#406C81>atrenka:</code><br>
+<code style=color:#B2B2B2>;-----------------------ATRENKA---------------------------------</code><br>
+<code style=color:#CE6E2D>lodsb</code>  				<code style=color:#B2B2B2>; Load byte at address DS<code style=color:#406C81>:</code>(E)SI into AL</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>ah</code>, [commentFlag]<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>ah</code>, <code style=color:#A859F2>0</code><br>
+<code style=color:#CE6E2D>jne</code> cont13<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>59</code> <code style=color:#B2B2B2>; tikrinam del ';'</code><br>
+<code style=color:#CE6E2D>jne</code> cont13<br>
+<code style=color:#B2B2B2>; suradom ; ir pries tai nebuvo</code><br>
+<code style=color:#CE6E2D>mov</code> [commentFlag] , <code style=color:#A859F2>1</code><br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>bx</code>, <code style=color:#A859F2>0</code><br>
+<code style=color:#CE6E2D>jne</code> cont13<br>
+<code style=color:#CE6E2D>call</code> printComment<br>
+<br>
+<code style=color:#406C81>cont13:</code><br>
+<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>41h</code>               <code style=color:#B2B2B2>; compare al with "A"</code><br>
+<code style=color:#CE6E2D>jl</code> next_char               <code style=color:#B2B2B2>; jump to next character if less</code><br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>5Ah</code>               <code style=color:#B2B2B2>; compare al with "Z"</code><br>
+jle found_letter           <code style=color:#B2B2B2>; if al is &gt= "A" && &lt= "Z" -&gt found a letter</code><br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>61h</code>               <code style=color:#B2B2B2>; compare al with "a"</code><br>
+<code style=color:#CE6E2D>jl</code> next_char               <code style=color:#B2B2B2>; jump to next character if less (since it's between "Z" & "a")</code><br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>7Ah</code>               <code style=color:#B2B2B2>; compare al with "z"</code><br>
+<code style=color:#CE6E2D>jg</code> next_char               <code style=color:#B2B2B2>; above "Z" -&gt not a character</code><br>
+<code style=color:#406C81>found_letter:</code><br>
+<br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>ax</code><br>
+<code style=color:#CE6E2D>mov</code> [simbolis], <code style=color:#9F3538>al</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>ah</code>, [commentFlag]<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>ah</code>, <code style=color:#A859F2>1</code><br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>ax</code><br>
+<code style=color:#CE6E2D>jne</code> forJump<br>
+<code style=color:#CE6E2D>jmp</code> cont1<br>
+<code style=color:#406C81>forJump:</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code> [wordB+<code style=color:#9F3538>bx</code>], <code style=color:#9F3538>al</code><br>
+<code style=color:#CE6E2D>inc</code> <code style=color:#9F3538>bx</code><br>
+<code style=color:#CE6E2D>jmp</code> cont2<br>
+<br>
+<code style=color:#406C81>next_char:</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>ah</code>, [commentFlag]<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>ah</code>, <code style=color:#A859F2>1</code><br>
+<code style=color:#CE6E2D>je</code> neskaicius<br>
+<br>
+<code style=color:#B2B2B2>; jeigu _ tai pridedam pr zodzio</code><br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>95</code><br>
+<code style=color:#CE6E2D>je</code> found_letter<br>
+<br>
+<code style=color:#B2B2B2>;tikrinam, kad pirmas nebutu skaicius</code><br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>bx</code>, <code style=color:#A859F2>0</code><br>
+<code style=color:#CE6E2D>je</code> neraide<br>
+<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>48</code>             <code style=color:#B2B2B2>; compare</code><br>
+<code style=color:#CE6E2D>jl</code> neskaicius      <code style=color:#B2B2B2>; jump to next character if less</code><br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>57</code>             <code style=color:#B2B2B2>; compare al</code><br>
+jle found_letter<br>
+<br>
+<br>
+<code style=color:#406C81>neraide:</code><br>
+<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>48</code>             <code style=color:#B2B2B2>; compare al</code><br>
+<code style=color:#CE6E2D>jl</code> neskaicius<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>57</code>             <code style=color:#B2B2B2>; compare al</code><br>
+jle skaicius2<br>
+<code style=color:#CE6E2D>jmp</code> neskaicius<br>
+<br>
+<code style=color:#406C81>skaicius2:</code><br>
+<code style=color:#CE6E2D>mov</code> [numFlag], <code style=color:#A859F2>1</code><br>
+<code style=color:#CE6E2D>mov</code> [color], <code style=color:#A859F2>3</code><br>
+<code style=color:#CE6E2D>jmp</code> found_letter<br>
+<br>
+<code style=color:#406C81>neskaicius:</code><br>
+<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, '<code style=color:#406C81>:</code>'<br>
+<code style=color:#CE6E2D>jne</code> cont15<br>
+<code style=color:#CE6E2D>mov</code> [wordB+<code style=color:#9F3538>bx</code>], <code style=color:#9F3538>al</code><br>
+<code style=color:#CE6E2D>mov</code> [tagFlag], <code style=color:#A859F2>1</code><br>
+<code style=color:#CE6E2D>inc</code> <code style=color:#9F3538>bx</code><br>
+<code style=color:#CE6E2D>mov</code> [match], <code style=color:#A859F2>1</code><br>
+<code style=color:#CE6E2D>mov</code> [color], <code style=color:#A859F2>1</code><br>
+<code style=color:#CE6E2D>jmp</code> checkRedReturn<br>
+<br>
+<code style=color:#406C81>cont15:</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code> [simbolis], <code style=color:#9F3538>al</code><br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>bx</code>, <code style=color:#A859F2>0</code><br>
+<code style=color:#CE6E2D>je</code> cont1<br>
+<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>ah</code>, [numFlag]<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>ah</code>, <code style=color:#A859F2>1</code><br>
+<code style=color:#CE6E2D>je</code> printWithS<br>
+<br>
+<code style=color:#B2B2B2>;kai reikia atpazinti zodi</code><br>
+<code style=color:#CE6E2D>jmp</code> checkRed<br>
+<code style=color:#406C81>checkRedReturn:</code><br>
+<br>
+<br>
+<br>
+<code style=color:#CE6E2D>cmp</code> match,<code style=color:#A859F2>1</code><br>
+<code style=color:#CE6E2D>jne</code> cont8<br>
+<code style=color:#B2B2B2>;atspausdint zodi su apdorojimu</code><br>
+<code style=color:#406C81>printWithS:</code><br>
+<code style=color:#CE6E2D>call</code> printCodeWithSpan<br>
+<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>59</code><br>
+<code style=color:#CE6E2D>jne</code> skipprintcomment<br>
+<code style=color:#CE6E2D>call</code> printComment<br>
+<br>
+<code style=color:#406C81>skipprintcomment:</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code> [numFlag], <code style=color:#A859F2>0</code><br>
+<code style=color:#CE6E2D>mov</code> [color], <code style=color:#A859F2>0</code><br>
+<br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>ax</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>al</code>, [tagFlag]<br>
+<code style=color:#CE6E2D>cmp</code> [tagFlag], <code style=color:#A859F2>1</code><br>
+<code style=color:#CE6E2D>je</code> cont19<br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>ax</code><br>
+<code style=color:#B2B2B2>;je cont16</code><br>
+<br>
+<code style=color:#CE6E2D>call</code> printSimbol<br>
+<code style=color:#B2B2B2>;print last simbol</code><br>
+<code style=color:#406C81>cont19:</code><br>
+<code style=color:#CE6E2D>mov</code> [tagFlag], <code style=color:#A859F2>0</code><br>
+<br>
+<code style=color:#406C81>cont16:</code><br>
+<br>
+<code style=color:#B2B2B2>;</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>bx</code>, <code style=color:#A859F2>0</code><br>
+<code style=color:#CE6E2D>jmp</code> cont9<br>
+<br>
+<code style=color:#406C81>cont8:</code><br>
+<code style=color:#B2B2B2>;atspausdinam zodi paprastai</code><br>
+<code style=color:#CE6E2D>call</code> printCodeNoSpan<br>
+<code style=color:#CE6E2D>call</code> printSimbol<br>
+<br>
+<code style=color:#B2B2B2>;print last simbol</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>bx</code>, <code style=color:#A859F2>0</code><br>
+<br>
+<code style=color:#406C81>cont9:</code><br>
+<code style=color:#CE6E2D>jmp</code> clearWordBuffer<br>
+<code style=color:#406C81>afterClear:</code><br>
+<br>
+<code style=color:#CE6E2D>jmp</code> cont2<br>
+<br>
+<code style=color:#406C81>cont1:</code><br>
+<code style=color:#B2B2B2>; cia atspausdint viena char (ne raide)</code><br>
+<code style=color:#CE6E2D>call</code> printSimbol<br>
+<br>
+<br>
+<code style=color:#406C81>cont2:</code><br>
+<code style=color:#CE6E2D>mov</code> match, <code style=color:#A859F2>0</code><br>
+<code style=color:#B2B2B2>; ------- loop atrenka</code><br>
+<code style=color:#B2B2B2>;loop	atrenka</code><br>
+<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>cx</code>, <code style=color:#A859F2>0</code><br>
+<code style=color:#CE6E2D>dec</code> <code style=color:#9F3538>cx</code><br>
+<code style=color:#CE6E2D>je</code> atrenkaBaige<br>
+<code style=color:#CE6E2D>jmp</code> atrenka<br>
+<br>
+<code style=color:#406C81>atrenkaBaige:</code><br>
+<br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>bx</code><br>
+<br>
+<code style=color:#B2B2B2>; ------- loop skaito</code><br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>cx</code>, <code style=color:#A859F2>0</code><br>
+<code style=color:#CE6E2D>dec</code> <code style=color:#9F3538>cx</code><br>
+<code style=color:#CE6E2D>je</code> skaitomBaige<br>
+<code style=color:#CE6E2D>jmp</code> skaitom<br>
+<br>
+<code style=color:#B2B2B2>;loop	skaitom</code><br>
+<br>
+<code style=color:#406C81>skaitomBaige:</code><br>
+<br>
+<code style=color:#406C81>clearWordBuffer:</code><br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>bx</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>bx</code>, <code style=color:#A859F2>0</code><br>
+<code style=color:#406C81>loop1:</code><br>
+<code style=color:#CE6E2D>mov</code> [wordB+<code style=color:#9F3538>bx</code>], <code style=color:#A859F2>1</code><br>
+<code style=color:#CE6E2D>inc</code> <code style=color:#9F3538>bx</code><br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>bx</code>, <code style=color:#A859F2>20</code><br>
+<code style=color:#CE6E2D>jne</code> loop1<br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>bx</code><br>
+<code style=color:#CE6E2D>jmp</code> afterClear<br>
+<br>
+<code style=color:#406C81>checkRed:</code><br>
+<code style=color:#B2B2B2>;mov si, redD</code><br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>bx</code><br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>ax</code><br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>si</code><br>
+<code style=color:#CE6E2D>mov</code> [count], <code style=color:#A859F2>0</code><br>
+<code style=color:#CE6E2D>lea</code> <code style=color:#9F3538>si</code>, red<br>
+<code style=color:#CE6E2D>mov</code> [color], <code style=color:#A859F2>0</code><br>
+<br>
+<br>
+<code style=color:#406C81>checkloop:</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>ah</code>, [count]<br>
+<code style=color:#CE6E2D>inc</code> <code style=color:#9F3538>ah</code><br>
+<code style=color:#CE6E2D>mov</code> [count],<code style=color:#9F3538>ah</code><br>
+<code style=color:#B2B2B2>;inc [count]</code><br>
+<br>
+<code style=color:#B2B2B2>; pradzioj</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>ax</code>, <code style=color:#A859F2>0</code> <code style=color:#B2B2B2>; syntaxes</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>bx</code>, <code style=color:#A859F2>0</code> <code style=color:#B2B2B2>; bufferio</code><br>
+<br>
+<br>
+<code style=color:#B2B2B2>; tesiam lyginima</code><br>
+<code style=color:#406C81>cont7:</code><br>
+<code style=color:#B2B2B2>; lyginam data buffer su syntax buffer</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>al</code>, [<code style=color:#9F3538>si</code>]<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>ah</code>, [wordB+<code style=color:#9F3538>bx</code>]<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, ' '<br>
+<code style=color:#CE6E2D>je</code> cont10<br>
+<code style=color:#CE6E2D>cmp</code> [wordB+<code style=color:#9F3538>bx</code>], <code style=color:#9F3538>al</code><br>
+<code style=color:#CE6E2D>jne</code> cont5<br>
+<br>
+<code style=color:#406C81>cont10:</code><br>
+<code style=color:#B2B2B2>; lyginam ar sutampa zodziai (galas_)</code><br>
+<code style=color:#CE6E2D>cmp</code> [wordB+<code style=color:#9F3538>bx</code>], <code style=color:#A859F2>1</code><br>
+<code style=color:#CE6E2D>jne</code> cont6<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, ' '<br>
+<code style=color:#CE6E2D>jne</code> cont6<br>
+<br>
+<code style=color:#B2B2B2>; turim zodi</code><br>
+<code style=color:#CE6E2D>mov</code> [match], <code style=color:#A859F2>1</code><br>
+<br>
+<code style=color:#CE6E2D>jmp</code> exit5<br>
+<br>
+<br>
+<code style=color:#406C81>cont6:</code> <code style=color:#B2B2B2>; jei dar ne pilnas syntax zodis</code><br>
+<br>
+<code style=color:#CE6E2D>inc</code> <code style=color:#9F3538>si</code><br>
+<code style=color:#CE6E2D>inc</code> <code style=color:#9F3538>bx</code><br>
+<code style=color:#CE6E2D>jmp</code> cont7 <code style=color:#B2B2B2>; i tikrinimo pradzia, tesiam</code><br>
+<br>
+<code style=color:#406C81>cont5:</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>bx</code>, <code style=color:#A859F2>0</code><br>
+<br>
+<code style=color:#406C81>skipSpaces:</code><br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, ' '<br>
+<code style=color:#CE6E2D>je</code> exit2<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>13</code><br>
+<code style=color:#CE6E2D>je</code> exit4<br>
+<code style=color:#CE6E2D>inc</code> <code style=color:#9F3538>si</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>al</code>, [<code style=color:#9F3538>si</code>]<br>
+<code style=color:#CE6E2D>jmp</code> skipSpaces<br>
+<br>
+<code style=color:#406C81>exit2:</code><br>
+<code style=color:#CE6E2D>inc</code> <code style=color:#9F3538>si</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>al</code>, [<code style=color:#9F3538>si</code>]<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>13</code><br>
+<code style=color:#CE6E2D>je</code> exit3<br>
+<code style=color:#CE6E2D>jmp</code> cont7<br>
+<code style=color:#406C81>exit4:</code><br>
+<code style=color:#CE6E2D>mov</code> [match], <code style=color:#A859F2>0</code><br>
+<code style=color:#CE6E2D>jmp</code> _7<br>
+<br>
+<code style=color:#406C81>exit3:</code><br>
+<code style=color:#B2B2B2>;surade zodi</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code> [color], <code style=color:#A859F2>2</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>ax</code>, <code style=color:#A859F2>0</code> <code style=color:#B2B2B2>; syntaxes</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>bx</code>, <code style=color:#A859F2>0</code> <code style=color:#B2B2B2>; bufferio</code><br>
+<code style=color:#CE6E2D>lea</code> <code style=color:#9F3538>si</code>, orange<br>
+<code style=color:#CE6E2D>cmp</code> [count],<code style=color:#A859F2>2</code><br>
+<code style=color:#CE6E2D>je</code> exit5<br>
+<br>
+<code style=color:#CE6E2D>jmp</code> checkloop<br>
+<br>
+<code style=color:#406C81>exit5:</code><br>
+<br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>si</code><br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>ax</code><br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>bx</code><br>
+<br>
+<code style=color:#CE6E2D>jmp</code> checkRedReturn<br>
+<br>
+<code style=color:#406C81>help:</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ax</code>, @data<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ds</code>, <code style=color:#9F3538>ax</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>dx</code>, offset apie<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ah</code>, <code style=color:#A859F2>09h</code><br>
+<code style=color:#CE6E2D>int</code>	<code style=color:#A859F2>21h</code><br>
+<br>
+<code style=color:#CE6E2D>jmp</code>	_end<br>
+<br>
+<code style=color:#406C81>closeF:</code><br>
+<code style=color:#B2B2B2>;; uzdaryti dest</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>bx</code>, destFHandle<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>ah</code>, <code style=color:#A859F2>40h</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>cx</code>, <code style=color:#A859F2>16</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>dx</code>, offset html2<br>
+<code style=color:#CE6E2D>int</code> <code style=color:#A859F2>21h</code><br>
+<br>
+<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ah</code>, <code style=color:#A859F2>3eh</code>			<code style=color:#B2B2B2>; uzdaryti</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>bx</code>, destFHandle<br>
+<code style=color:#CE6E2D>int</code>	<code style=color:#A859F2>21h</code><br>
+<br>
+<code style=color:#406C81>_end:</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ax</code>, <code style=color:#A859F2>4c00h</code><br>
+<code style=color:#CE6E2D>int</code>	<code style=color:#A859F2>21h</code><br>
+<br>
+<code style=color:#406C81>err_destination:</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ax</code>, @data<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ds</code>, <code style=color:#9F3538>ax</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>dx</code>, offset err_d<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ah</code>, <code style=color:#A859F2>09h</code><br>
+<code style=color:#CE6E2D>int</code>	<code style=color:#A859F2>21h</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>dx</code>, offset destF<br>
+<code style=color:#CE6E2D>int</code>	<code style=color:#A859F2>21h</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ax</code>, <code style=color:#A859F2>4c02h</code><br>
+<code style=color:#CE6E2D>int</code>	<code style=color:#A859F2>21h</code><br>
+<br>
+<code style=color:#B2B2B2>;; procedures --------------------------------------------</code><br>
+<br>
+skip_spaces PROC near<br>
+<code style=color:#406C81>skip_spaces_loop:</code><br>
+<code style=color:#CE6E2D>cmp</code> byte ptr <code style=color:#406C81>ds:</code>[<code style=color:#9F3538>si</code>], ' '<br>
+<code style=color:#CE6E2D>jne</code> skip_spaces_end<br>
+<code style=color:#CE6E2D>inc</code> <code style=color:#9F3538>si</code><br>
+<code style=color:#CE6E2D>jmp</code> skip_spaces_loop<br>
+<code style=color:#406C81>skip_spaces_end:</code><br>
+<code style=color:#CE6E2D>ret</code><br>
+skip_spaces ENDP<br>
+<br>
+read_filename PROC near<br>
+<code style=color:#CE6E2D>push</code>	<code style=color:#9F3538>ax</code><br>
+<code style=color:#CE6E2D>call</code>	skip_spaces<br>
+<code style=color:#406C81>read_filename_start:</code><br>
+<code style=color:#CE6E2D>cmp</code>	byte ptr <code style=color:#406C81>ds:</code>[<code style=color:#9F3538>si</code>], <code style=color:#A859F2>13</code>	<code style=color:#B2B2B2>; jei nera parametru</code><br>
+<code style=color:#CE6E2D>je</code>	read_filename_end	<code style=color:#B2B2B2>; tai taip, tai baigtas failo vedimas</code><br>
+<code style=color:#CE6E2D>cmp</code>	byte ptr <code style=color:#406C81>ds:</code>[<code style=color:#9F3538>si</code>], ' '	<code style=color:#B2B2B2>; jei tarpas</code><br>
+<code style=color:#CE6E2D>jne</code>	read_filename_next	<code style=color:#B2B2B2>; tai praleisti visus tarpus, ir sokti prie kito parametro</code><br>
+<code style=color:#406C81>read_filename_end:</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>al</code>, '$'			<code style=color:#B2B2B2>; irasyti '$' gale</code><br>
+<code style=color:#CE6E2D>stosb</code>                           <code style=color:#B2B2B2>; Store AL at address ES<code style=color:#406C81>:</code>(E)DI, di = di + 1</code><br>
+<code style=color:#CE6E2D>pop</code>	<code style=color:#9F3538>ax</code><br>
+<code style=color:#CE6E2D>ret</code><br>
+<code style=color:#406C81>read_filename_next:</code><br>
+<code style=color:#CE6E2D>lodsb</code>				<code style=color:#B2B2B2>; uzkrauna kita simboli</code><br>
+<code style=color:#CE6E2D>stosb</code>                           <code style=color:#B2B2B2>; Store AL at address ES<code style=color:#406C81>:</code>(E)DI, di = di + 1</code><br>
+<code style=color:#CE6E2D>jmp</code> read_filename_start<br>
+read_filename ENDP<br>
+<br>
+printCodeWithSpan PROC near<br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>cx</code><br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>ax</code><br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>bx</code><br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>bx</code><br>
+<br>
+<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>al</code>, [color]<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>0</code><br>
+<code style=color:#CE6E2D>je</code> raudonai<br>
+<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>1</code><br>
+<code style=color:#CE6E2D>je</code> melynai<br>
+<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>2</code><br>
+<code style=color:#CE6E2D>je</code> oranzinei<br>
+<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>3</code><br>
+<code style=color:#CE6E2D>je</code> ruzavai<br>
+<br>
+<code style=color:#406C81>melynai:</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>dx</code>, offset blueD<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>cx</code>, <code style=color:#A859F2>26</code><br>
+<code style=color:#CE6E2D>jmp</code> setDestination<br>
+<br>
+<code style=color:#406C81>oranzinei:</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>dx</code>, offset orangeD<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>cx</code>, <code style=color:#A859F2>26</code><br>
+<code style=color:#CE6E2D>jmp</code> setDestination<br>
+<br>
+<code style=color:#406C81>raudonai:</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>cx</code>, <code style=color:#A859F2>26</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>dx</code>, offset redD<br>
+<code style=color:#CE6E2D>jmp</code> setDestination<br>
+<br>
+<code style=color:#406C81>ruzavai:</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>cx</code>, <code style=color:#A859F2>26</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>dx</code>, offset pinkD<br>
+<br>
+<br>
+<code style=color:#406C81>setDestination:</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>bx</code>, destFHandle<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>ah</code>, <code style=color:#A859F2>40h</code><br>
+<br>
+<code style=color:#CE6E2D>int</code> <code style=color:#A859F2>21h</code><code style=color:#B2B2B2>;</code><br>
+<br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>bx</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>cx</code>, <code style=color:#9F3538>bx</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>bx</code>, destFHandle<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>ah</code>, <code style=color:#A859F2>40h</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>dx</code>, offset wordB<br>
+<code style=color:#CE6E2D>int</code> <code style=color:#A859F2>21h</code><code style=color:#B2B2B2>;</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>bx</code>, destFHandle<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>cx</code>, <code style=color:#A859F2>7</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>ah</code>, <code style=color:#A859F2>40h</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>dx</code>, offset endcodeD<br>
+<code style=color:#CE6E2D>int</code> <code style=color:#A859F2>21h</code><code style=color:#B2B2B2>;</code><br>
+<br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>bx</code><br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>ax</code><br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>cx</code><br>
+<code style=color:#CE6E2D>ret</code><br>
+printCodeWithSpan ENDP<br>
+<br>
+printCodeNoSpan PROC near<br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>cx</code><br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>ax</code><br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>bx</code><br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>bx</code><br>
+<br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>bx</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>cx</code>, <code style=color:#9F3538>bx</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>bx</code>, destFHandle<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>ah</code>, <code style=color:#A859F2>40h</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>dx</code>, offset wordB<br>
+<code style=color:#CE6E2D>int</code> <code style=color:#A859F2>21h</code><code style=color:#B2B2B2>;</code><br>
+<br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>bx</code><br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>ax</code><br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>cx</code><br>
+<code style=color:#CE6E2D>ret</code><br>
+printCodeNoSpan ENDP<br>
+<br>
+printSimbol PROC near<br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>cx</code><br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>ax</code><br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>bx</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>al</code>, [simbolis]<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>10</code><br>
+<code style=color:#CE6E2D>jne</code> cont11<br>
+<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>ah</code>, [commentFlag]<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>ah</code>, <code style=color:#A859F2>1</code><br>
+<code style=color:#CE6E2D>jne</code> cont14<br>
+<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>cx</code>, <code style=color:#A859F2>7</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ah</code>, <code style=color:#A859F2>40h</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>bx</code>, destFHandle<br>
+<code style=color:#CE6E2D>lea</code> <code style=color:#9F3538>dx</code>, endcodeD<br>
+<code style=color:#CE6E2D>int</code> <code style=color:#A859F2>21h</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code> [commentFlag], <code style=color:#A859F2>0</code><br>
+<br>
+<code style=color:#406C81>cont14:</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>cx</code>, <code style=color:#A859F2>4</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ah</code>, <code style=color:#A859F2>40h</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>bx</code>, destFHandle<br>
+<code style=color:#CE6E2D>lea</code> <code style=color:#9F3538>dx</code>, newline<br>
+<code style=color:#CE6E2D>int</code> <code style=color:#A859F2>21h</code><br>
+<br>
+<code style=color:#406C81>cont11:</code><br>
+<br>
+<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>60</code><br>
+<code style=color:#CE6E2D>jne</code> cont17<br>
+<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>bx</code>, destFHandle<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>cx</code>, <code style=color:#A859F2>3</code><br>
+<code style=color:#CE6E2D>lea</code> <code style=color:#9F3538>dx</code>, less<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ah</code>, <code style=color:#A859F2>40h</code>			<code style=color:#B2B2B2>; INT 21h / AH= 40h - write to file</code><br>
+<code style=color:#CE6E2D>int</code>	<code style=color:#A859F2>21h</code><br>
+<code style=color:#CE6E2D>jmp</code> pabaiga2<br>
+<br>
+<br>
+<code style=color:#406C81>cont17:</code><br>
+<br>
+<code style=color:#CE6E2D>cmp</code> <code style=color:#9F3538>al</code>, <code style=color:#A859F2>62</code><br>
+<code style=color:#CE6E2D>jne</code> cont18<br>
+<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>bx</code>, destFHandle<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>cx</code>, <code style=color:#A859F2>3</code><br>
+<code style=color:#CE6E2D>lea</code> <code style=color:#9F3538>dx</code>, more<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ah</code>, <code style=color:#A859F2>40h</code>			<code style=color:#B2B2B2>; INT 21h / AH= 40h - write to file</code><br>
+<code style=color:#CE6E2D>int</code>	<code style=color:#A859F2>21h</code><br>
+<code style=color:#CE6E2D>jmp</code> pabaiga2<br>
+<br>
+<br>
+<br>
+<code style=color:#406C81>cont18:</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>bx</code>, destFHandle<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>cx</code>, <code style=color:#A859F2>1</code><br>
+<code style=color:#CE6E2D>lea</code> <code style=color:#9F3538>dx</code>, [simbolis]<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ah</code>, <code style=color:#A859F2>40h</code>			<code style=color:#B2B2B2>; INT 21h / AH= 40h - write to file</code><br>
+<code style=color:#CE6E2D>int</code>	<code style=color:#A859F2>21h</code><br>
+<br>
+<code style=color:#406C81>pabaiga2:</code><br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>bx</code><br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>ax</code><br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>cx</code><br>
+<code style=color:#CE6E2D>ret</code><br>
+printSimbol ENDP<br>
+<br>
+inputConfig PROC near<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>bx</code>, sourceFHandle<br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>dx</code>, offset buffer       <code style=color:#B2B2B2>; address of buffer in dx</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>cx</code>, <code style=color:#A859F2>100</code>       			  		<code style=color:#B2B2B2>; kiek baitu nuskaitysim</code><br>
+<code style=color:#CE6E2D>mov</code>	<code style=color:#9F3538>ah</code>, <code style=color:#A859F2>3fh</code>      				   	<code style=color:#B2B2B2>; function 3Fh - read from file</code><br>
+<code style=color:#CE6E2D>int</code>	<code style=color:#A859F2>21h</code><br>
+<code style=color:#CE6E2D>ret</code><br>
+inputConfig ENDP<br>
+<br>
+printComment PROC near<br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>cx</code><br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>ax</code><br>
+<code style=color:#CE6E2D>push</code> <code style=color:#9F3538>bx</code><br>
+<br>
+<code style=color:#CE6E2D>mov</code> [numFlag], <code style=color:#A859F2>0</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>bx</code>, destFHandle<br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>cx</code>, <code style=color:#A859F2>26</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>ah</code>, <code style=color:#A859F2>40h</code><br>
+<code style=color:#CE6E2D>mov</code> <code style=color:#9F3538>dx</code>, offset commentD<br>
+<code style=color:#CE6E2D>int</code> <code style=color:#A859F2>21h</code><code style=color:#B2B2B2>;</code><br>
+<br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>bx</code><br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>ax</code><br>
+<code style=color:#CE6E2D>pop</code> <code style=color:#9F3538>cx</code><br>
+<code style=color:#CE6E2D>ret</code><br>
+printComment ENDP<br>
+<br>
+end START<br>
+</pre></code> </body>

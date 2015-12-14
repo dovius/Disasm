@@ -23,7 +23,7 @@ HEX_Out   DB  "00", 13, 10, '$'   ; string with line feed and '$'-terminator
 spaceString  db '     '
 lineStringAdd db ':  ', '$'
 
-line_iret db 'CF', 9, 'IRET',13,10,'$'
+line_iret db 'CF', 9, 9, 'IRET',13,10,'$'
 line_unkn db 9, 'Neatpazinta komanda',13,10, '$'
 
 
@@ -112,15 +112,15 @@ lodsb  				; Load byte at address DS:(E)SI into AL
 call printLineNumber
 
 
-;cmp al, 11001111b
-;jne not_iret
-;call com_iret
-;jmp inc_lineCount
-;not_iret:
+cmp al, 11001111b
+jne not_iret
+call com_iret
+jmp inc_lineCount
+not_iret:
 
 call com_unk
 
-
+inc_lineCount:
 call incLineNumber
 
 loop	atrenka
@@ -314,5 +314,18 @@ com_unk:
 
  ret
 com_unk ENDP
+
+com_iret PROC
+com_iret:
+
+ push cx
+ mov cx, 10
+ mov ah, 40h
+ mov bx, destFHandle
+ lea dx, line_iret
+ int 21h
+ pop cx
+ ret
+com_iret ENDP
 
 end START

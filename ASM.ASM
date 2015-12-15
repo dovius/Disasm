@@ -1,98 +1,2 @@
-0100:  
-0101:  
-0102:  
-0103:  
-0104:  
-0105:  
-0106:  
-0107:  
-0108:  
-0109:  
-010A:  
-010B:  
-010C:  
-010D:  
-010E:  
-010F:  
-0110:  
-0111:  
-0112:  
-0113:  
-0114:  
-0115:  
-0116:  
-0117:  
-0118:  
-0119:  
-011A:  
-011B:  
-011C:  
-011D:  
-011E:  
-011F:  
-0120:  
-0121:  
-0122:  
-0123:  
-0124:  
-0125:  
-0126:  
-0127:  
-0128:  
-0129:  
-012A:  
-012B:  
-012C:  
-012D:  
-012E:  
-012F:  
-0130:  
-0131:  
-0132:  
-0133:  
-0134:  
-0135:  
-0136:  
-0137:  
-0138:  
-0139:  
-013A:  
-013B:  
-013C:  
-013D:  
-013E:  
-013F:  
-0140:  
-0141:  
-0142:  
-0143:  
-0144:  
-0145:  
-0146:  
-0147:  
-0148:  
-0149:  
-014A:  
-014B:  
-014C:  
-014D:  
-014E:  
-014F:  
-0150:  
-0151:  
-0152:  
-0153:  
-0154:  
-0155:  
-0156:  
-0157:  
-0158:  
-0159:  
-015A:  
-015B:  
-015C:  
-015D:  
-015E:  
-015F:  
-0160:  
-0161:  
+0100:  EB    	Neatpazinta komanda0101:  2A    	Neatpazinta komanda0102:  90    	Neatpazinta komanda0103:  4C    	Neatpazinta komanda0104:  61    	Neatpazinta komanda0105:  62    	Neatpazinta komanda0106:  61    	Neatpazinta komanda0107:  73    	Neatpazinta komanda0108:  0A    	Neatpazinta komanda0109:  0D    	Neatpazinta komanda010A:  24    	Neatpazinta komanda010B:  50    	Neatpazinta komanda010C:  72    	Neatpazinta komanda010D:  61    	Neatpazinta komanda010E:  6E    	Neatpazinta komanda010F:  65    	Neatpazinta komanda0110:  73    	Neatpazinta komanda0111:  69    	Neatpazinta komanda0112:  6D    	Neatpazinta komanda0113:  61    	Neatpazinta komanda0114:  73    	Neatpazinta komanda0115:  24    	Neatpazinta komanda0116:  00    	Neatpazinta komanda0117:  00    	Neatpazinta komanda0118:  00    	Neatpazinta komanda0119:  4D    	Neatpazinta komanda011A:  79    	Neatpazinta komanda011B:  20    	Neatpazinta komanda011C:  73    	Neatpazinta komanda011D:  65    	Neatpazinta komanda011E:  63    	Neatpazinta komanda011F:  6F    	Neatpazinta komanda0120:  6E    	Neatpazinta komanda0121:  64    	Neatpazinta komanda0122:  20    	Neatpazinta komanda0123:  73    	Neatpazinta komanda0124:  74    	Neatpazinta komanda0125:  72    	Neatpazinta komanda0126:  69    	Neatpazinta komanda0127:  6E    	Neatpazinta komanda0128:  67    	Neatpazinta komanda0129:  2E    	Neatpazinta komanda012A:  20    	Neatpazinta komanda012B:  24    	Neatpazinta komanda012C:  E404	in	04h
+012E:  EC    	Neatpazinta komanda012F:  84    	Neatpazinta komanda0130:  C4    	Neatpazinta komanda0131:  A8    	Neatpazinta komanda0132:  04    	Neatpazinta komanda0133:  2E    	Neatpazinta komanda0134:  84    	Neatpazinta komanda0135:  06    	Neatpazinta komanda0136:  16    	Neatpazinta komanda0137:  01    	Neatpazinta komanda0138:  86    	Neatpazinta komanda0139:  C4    	Neatpazinta komanda013A:  93    	Neatpazinta komanda013B:  2E    	Neatpazinta komanda013C:  87    	Neatpazinta komanda013D:  06    	Neatpazinta komanda013E:  17    	Neatpazinta komanda013F:  01    	Neatpazinta komanda0140:  BA    	Neatpazinta komanda0141:  00    	Neatpazinta komanda0142:  00    	Neatpazinta komanda0143:  B8    	Neatpazinta komanda0144:  D2    	Neatpazinta komanda0145:  04    	Neatpazinta komanda0146:  BB    	Neatpazinta komanda0147:  0A    	Neatpazinta komanda0148:  00    	Neatpazinta komanda0149:  F7    	Neatpazinta komanda014A:  F3    	Neatpazinta komanda014B:  B8    	Neatpazinta komanda014C:  EB    	Neatpazinta komanda014D:  FF    	Neatpazinta komanda014E:  B7    	Neatpazinta komanda014F:  05    	Neatpazinta komanda0150:  F6    	Neatpazinta komanda0151:  FF    	Neatpazinta komanda0152:  B4    	Neatpazinta komanda0153:  04    	Neatpazinta komanda0154:  B0    	Neatpazinta komanda0155:  03    	Neatpazinta komanda0156:  CD    	Neatpazinta komanda0157:  21    	Neatpazinta komanda0158:  E8    	Neatpazinta komanda0159:  05    	Neatpazinta komanda015A:  00    	Neatpazinta komanda015B:  B8    	Neatpazinta komanda015C:  00    	Neatpazinta komanda015D:  4C    	Neatpazinta komanda015E:  CD    	Neatpazinta komanda015F:  21    	Neatpazinta komanda0160:  EC    	Neatpazinta komanda0161:  CF		IRET

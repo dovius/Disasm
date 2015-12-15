@@ -1,4 +1,4 @@
-Turbo Assembler	 Version 3.2	    12/14/15 17:17:44	    Page 1
+Turbo Assembler	 Version 3.2	    12/15/15 11:41:57	    Page 1
 dis.ASM
 
 
@@ -41,294 +41,418 @@ dis.ASM
      36	      45 46
      37	0081  30 30 0D 0A 24	     HEX_Out   DB  "00", 13, 10, '$'   ; string	with line feed and '$'-terminator
      38
-     39	0086  3A 20 20 0D 0A	     lineStringAdd db ':  ',13,10
-     40
-     41	008B  43 46 09 49 52 45	54+  line_iret db 'CF',	9, 'IRET',13,10,'$'
-     42	      0D 0A 24
-     43	0095  09 4E 65 61 74 70	61+  line_unkn db 9, 'Neatpazinta komanda',13,10, '$'
-     44	      7A 69 6E 74 61 20	6B+
-     45	      6F 6D 61 6E 64 61	0D+
-     46	      0A 24
-     47
-     48
-     49	00AC  74 65 73 74 2E 63	6F+  sourceF	     db	'test.com'
-     50	      6D
-     51	00B4  ????		     sourceFHandle   dw	?
+     39	0086  20 20 20 20 20	     spaceString  db '	   '
+     40	008B  3A 20 20 24	     lineStringAdd db ':  ', '$'
+     41	008F  20 24		     hexBuffer db ' ', '$'
+     42
+     43
+     44	0091  43 46 09 09 49 52	45+  line_iret db 'CF',	9, 9, 'IRET',13,10,'$'
+     45	      54 0D 0A 24
+     46	009C  09 4E 65 61 74 70	61+  line_unkn db 9, 'Neatpazinta komanda',13,10, '$'
+     47	      7A 69 6E 74 61 20	6B+
+     48	      6F 6D 61 6E 64 61	0D+
+     49	      0A 24
+     50	00B3  09 69 6E 09 24	     line_in db	9,'in',9,'$'
+     51	00B8  68 0D 0A 24	     line_hNewLine db 'h',13,10, '$'
      52
-     53	00B6  61 73 6D 2E 61 73	6D   destF	     db	'asm.asm'
-     54	00BD  ????		     destFHandle     dw	?
-     55
-     56	00BF  64*(??)		     buffer    db 100 dup (?)
-     57
-Turbo Assembler	 Version 3.2	    12/14/15 17:17:44	    Page 2
+     53	00BC  74 65 73 74 2E 63	6F+  sourceF	     db	'test.com'
+     54	      6D
+     55	00C4  ????		     sourceFHandle   dw	?
+     56
+     57	00C6  61 73 6D 2E 61 73	6D   destF	     db	'asm.asm'
+Turbo Assembler	 Version 3.2	    12/15/15 11:41:57	    Page 2
 dis.ASM
 
 
 
-     58	0123			     .code
+     58	00CD  ????		     destFHandle     dw	?
      59
-     60				     ;div	1111 011w mod 110 r/m [poslinkis]
-     61				     ;idiv    1111 011w	mod 111	r/m [poslinkis]
-     62				     ;in      1110 110w	arba 1110 010w portas (vieno baito dydzio betarpiskas operandas)
-     63				     ;iret	1100 1111
-     64				     ;int	1100 1100 (INT 3) 11001101 kodas (visi kiti int	kur kodas-1 baitas)
-     65				     ;les     1100 0100	mod reg	r/m [poslinkis]	 reg-<atm
-     66				     ;xchg	1001 0000 (NOP/XCHG ax,ax) 1001	0xxx (x-registras, kai is x i ax)
-     67				     ;test	1000 010w mod reg r/m [poslinkis]
-     68
-     69
-     70	0000			     START:
-     71	0000  B8 0000s		     mov     ax, @data
-     72	0003  8E C0		     mov     es, ax		     ; es kad galetume naudot stosb funkcija: Store AL at address   +
-     73				     ES:(E)DI
+     60	00CF  64*(??)		     buffer    db 100 dup (?)
+     61
+     62
+     63
+     64	0133			     .code
+     65
+     66				     ;div	1111 011w mod 110 r/m [poslinkis]
+     67				     ;idiv    1111 011w	mod 111	r/m [poslinkis]
+     68				     ;in      1110 110w	arba 1110 010w portas (vieno baito dydzio betarpiskas operandas)
+     69				     ;iret	1100 1111
+     70				     ;int	1100 1100 (INT 3) 11001101 kodas (visi kiti int	kur kodas-1 baitas)
+     71				     ;les     1100 0100	mod reg	r/m [poslinkis]	 reg-<atm
+     72				     ;xchg	1001 0000 (NOP/XCHG ax,ax) 1001	0xxx (x-registras, kai is x i ax)
+     73				     ;test	1000 010w mod reg r/m [poslinkis]
      74
-     75	0005  BF 00B6r		     lea     di, destF
-     76	0008  BF 00ACr		     lea     di, sourceF
-     77
-     78	000B  1E		     push    ds
-     79	000C  56		     push    si
+     75
+     76	0000			     START:
+     77	0000  B8 0000s		     mov     ax, @data
+     78	0003  8E C0		     mov     es, ax		     ; es kad galetume naudot stosb funkcija: Store AL at address   +
+     79				     ES:(E)DI
      80
-     81	000D  B8 0000s		     mov     ax, @data
-     82	0010  8E D8		     mov     ds, ax
+     81	0005  BF 00C6r		     lea     di, destF
+     82	0008  BF 00BCr		     lea     di, sourceF
      83
-     84				     ;;	rasymui
-     85	0012  BA 00B6r		     mov     dx, offset	destF	     ; ikelti i	dx destF - failo pavadinima
-     86	0015  B4 3C		     mov     ah, 3ch		     ; isvalo/sukuria faila - komandos kodas
-     87	0017  B9 0000		     mov     cx, 0		     ; normal -	no attributes
-     88	001A  CD 21		     int     21h		     ; INT 21h / AH= 3Ch - create or truncate file.
+     84	000B  1E		     push    ds
+     85	000C  56		     push    si
+     86
+     87	000D  B8 0000s		     mov     ax, @data
+     88	0010  8E D8		     mov     ds, ax
      89
-     90
-     91	001C  B4 3D		     mov     ah, 3dh		     ; atidaro faila - komandos	kodas
-     92	001E  B0 01		     mov     al, 1		     ; rasymui
-     93	0020  CD 21		     int     21h		     ; INT 21h / AH= 3Dh - open	existing file.
-     94
-     95	0022  A3 00BDr		     mov     destFHandle, ax	     ; issaugom	handle
+     90				     ;;	rasymui
+     91	0012  BA 00C6r		     mov     dx, offset	destF	     ; ikelti i	dx destF - failo pavadinima
+     92	0015  B4 3C		     mov     ah, 3ch		     ; isvalo/sukuria faila - komandos kodas
+     93	0017  B9 0000		     mov     cx, 0		     ; normal -	no attributes
+     94	001A  CD 21		     int     21h		     ; INT 21h / AH= 3Ch - create or truncate file.
+     95
      96
-     97	0025  EB 01 90		     jmp     startConverting
-     98
-     99
-    100	0028			     startConverting:
-    101	0028  BA 00ACr		     mov     dx, offset	sourceF	     ; failo pavadinimas
-    102	002B  B4 3D		     mov     ah, 3dh		     ; atidaro faila - komandos	kodas
-    103	002D  B0 00		     mov     al, 0		     ; 0 - reading, 1-writing, 2-abu
-    104	002F  CD 21		     int     21h				 ; INT 21h / AH= 3Dh - open existing file
-    105	0031  72 51		     jc	     err_source			   ; CF	set on error AX	= error	code.
-    106	0033  A3 00B4r		     mov     sourceFHandle, ax	       ; issaugojam filehandle
-    107
-    108	0036			     skaitom:
-    109	0036  8B 1E 00B4r	     mov     bx, sourceFHandle
-    110	003A  BA 00BFr		     mov     dx, offset	buffer	     ; address of buffer in dx
-    111	003D  B9 0014		     mov     cx, 20			     ; kiek baitu nuskaitysim
-    112	0040  B4 3F		     mov     ah, 3fh		     ; function	3Fh - read from	file
-    113	0042  CD 21		     int     21h
-    114
-Turbo Assembler	 Version 3.2	    12/14/15 17:17:44	    Page 3
+     97	001C  B4 3D		     mov     ah, 3dh		     ; atidaro faila - komandos	kodas
+     98	001E  B0 01		     mov     al, 1		     ; rasymui
+     99	0020  CD 21		     int     21h		     ; INT 21h / AH= 3Dh - open	existing file.
+    100
+    101	0022  A3 00CDr		     mov     destFHandle, ax	     ; issaugom	handle
+    102
+    103	0025  EB 01 90		     jmp     startConverting
+    104
+    105
+    106	0028			     startConverting:
+    107	0028  BA 00BCr		     mov     dx, offset	sourceF	     ; failo pavadinimas
+    108	002B  B4 3D		     mov     ah, 3dh		     ; atidaro faila - komandos	kodas
+    109	002D  B0 00		     mov     al, 0		     ; 0 - reading, 1-writing, 2-abu
+    110	002F  CD 21		     int     21h				 ; INT 21h / AH= 3Dh - open existing file
+    111	0031  73 03		     jnc     not_err_source		   ; CF	set on error AX	= error	code.
+    112	0033  E9 008F		     jmp err_source
+    113	0036			     not_err_source:
+    114	0036  A3 00C4r		     mov     sourceFHandle, ax	       ; issaugojam filehandle
+Turbo Assembler	 Version 3.2	    12/15/15 11:41:57	    Page 3
 dis.ASM
 
 
 
-    115	0044  8B C8		     mov     cx, ax		     ; bytes actually read
-    116	0046  3D 0000		     cmp     ax, 0			     ; jei nenuskaite
-    117	0049  75 0B		     jne     _6			     ; tai ne pabaiga
-    118
-    119	004B  8B 1E 00B4r	     mov     bx, sourceFHandle	     ; pabaiga skaitomo	failo
-    120	004F  B4 3E		     mov     ah, 3eh		     ; uzdaryti
-    121	0051  CD 21		     int     21h
-    122	0053  EB 2A 90		     jmp _end
-    123
-    124	0056			     _6:
-    125	0056  BE 00BFr		     mov     si, offset	buffer	     ; skaitoma	is cia
-    126	0059  8B 1E 00BDr	     mov     bx, destFHandle	     ; rasoma i	cia
-    127
-    128
-    129				     ; cia prasideda pagrindine	logika (apdoroja kiekviena baita)
-    130	005D			     atrenka:
-    131	005D  AC		     lodsb			     ; Load byte at address DS:(E)SI into AL
-    132
-    133	005E  E8 0093		     call printLineNumber
+    115
+    116	0039			     skaitom:
+    117
+    118	0039  E8 0188		     call readToBuff
+    119
+    120	003C  75 0B		     jne     _6			     ; tai ne pabaiga
+    121
+    122	003E  8B 1E 00C4r	     mov     bx, sourceFHandle	     ; pabaiga skaitomo	failo
+    123	0042  B4 3E		     mov     ah, 3eh		     ; uzdaryti
+    124	0044  CD 21		     int     21h
+    125	0046  EB 70 90		     jmp closeF
+    126
+    127	0049			     _6:
+    128	0049  BE 00CFr		     mov     si, offset	buffer	     ; skaitoma	is cia
+    129	004C  8B 1E 00CDr	     mov     bx, destFHandle	     ; rasoma i	cia
+    130
+    131				     ; cia prasideda pagrindine	logika (apdoroja kiekviena baita)
+    132	0050			     atrenka:
+    133	0050  AC		     lodsb			     ; Load byte at address DS:(E)SI into AL
     134
-    135
+    135	0051  E8 00E3		     call printLineNumber
     136
-    137
-    138	0061  E8 00D3		     call incLineNumber
-    139
-    140	0064  E2 F7		     loop    atrenka
-    141	0066  E2 CE		     loop    skaitom
-    142
-    143	0068			     help:
-    144	0068  B8 0000s		     mov     ax, @data
-    145	006B  8E D8		     mov     ds, ax
-    146
-    147	006D  BA 0000r		     mov     dx, offset	apie
-    148	0070  B4 09		     mov     ah, 09h
-    149	0072  CD 21		     int     21h
-    150
-    151	0074  EB 09 90		     jmp     _end
-    152
-    153	0077			     closeF:
-    154				     ;;	uzdaryti dest
-    155	0077  B4 3E		     mov     ah, 3eh		     ; uzdaryti
-    156	0079  8B 1E 00BDr	     mov     bx, destFHandle
-    157	007D  CD 21		     int     21h
-    158
-    159	007F			     _end:
-    160	007F  B8 4C00		     mov     ax, 4c00h
-    161	0082  CD 21		     int     21h
-    162
-    163	0084			     err_source:
-    164	0084  B8 0000s		     mov     ax, @data
-    165	0087  8E D8		     mov     ds, ax
-    166
-    167	0089  BA 0041r		     mov     dx, offset	err_s
-    168	008C  B4 09		     mov     ah, 09h
-    169	008E  CD 21		     int     21h
-    170
-    171	0090  BA 00ACr		     mov     dx, offset	sourceF
-Turbo Assembler	 Version 3.2	    12/14/15 17:17:44	    Page 4
+    137	0054  8A D8		     mov bl, al
+    138	0056  80 E3 FE		     and bl, 11111110b
+    139	0059  80 FB E4		     cmp bl, 11100100b
+    140	005C  75 37		     jne not_in2
+    141
+    142				     ;TODO in proc  (galimas erroras)
+    143	005E  E8 0177		     call printHexByte
+    144	0061  83 F9 01		     cmp cx, 1
+    145	0064  75 03		     jne skipRefill
+    146	0066  E8 015B		     call readToBuff
+    147	0069			     skipRefill:
+    148
+    149	0069  AC		     lodsb
+    150	006A  49		     dec cx
+    151	006B  E8 016A		     call printHexByte
+    152	006E  E8 0109		     call incLineNumber
+    153
+    154				     ;TODO normalia printString	funkcija, suskaiciuot cx fja
+    155	0071  51		     push cx
+    156	0072  B9 0004		     mov cx, 4
+    157	0075  B4 40		     mov ah, 40h
+    158	0077  8B 1E 00CDr	     mov bx, destFHandle
+    159	007B  BA 00B3r		     lea dx, line_in
+    160	007E  CD 21		     int 21h
+    161
+    162	0080  E8 0155		     call printHexByte
+    163
+    164	0083  B9 0003		     mov cx, 3
+    165	0086  B4 40		     mov ah, 40h
+    166	0088  8B 1E 00CDr	     mov bx, destFHandle
+    167	008C  BA 00B8r		     lea dx, line_hNewLine
+    168	008F  CD 21		     int 21h
+    169
+    170	0091  59		     pop cx
+    171
+Turbo Assembler	 Version 3.2	    12/15/15 11:41:57	    Page 4
 dis.ASM
 
 
 
-    172	0093  CD 21		     int     21h
-    173
-    174	0095  B8 4C01		     mov     ax, 4c01h
-    175	0098  CD 21		     int     21h
+    172
+    173	0092  EB 0E 90		     jmp inc_lineCount
+    174
+    175	0095			     not_in2:
     176
-    177	009A			     err_destination:
-    178	009A  B8 0000s		     mov     ax, @data
-    179	009D  8E D8		     mov     ds, ax
-    180
-    181	009F  BA 0012r		     mov     dx, offset	err_d
-    182	00A2  B4 09		     mov     ah, 09h
-    183	00A4  CD 21		     int     21h
+    177	0095  3C CF		     cmp al, 11001111b
+    178	0097  75 06		     jne not_iret
+    179	0099  E8 0117		     call com_iret
+    180	009C  EB 04 90		     jmp inc_lineCount
+    181	009F			     not_iret:
+    182
+    183	009F  E8 00EF		     call com_unk
     184
-    185	00A6  BA 00B6r		     mov     dx, offset	destF
-    186	00A9  CD 21		     int     21h
-    187
-    188	00AB  B8 4C02		     mov     ax, 4c02h
-    189	00AE  CD 21		     int     21h
-    190
+    185
+    186	00A2			     inc_lineCount:
+    187	00A2  E8 00D5		     call incLineNumber
+    188
+    189	00A5  E2 A9		     loop    atrenka
+    190	00A7  EB 90		     jmp skaitom
     191
-    192				     ;;	procedures
-    193
-    194	00B0			     skip_spaces PROC near
+    192	00A9			     help:
+    193	00A9  B8 0000s		     mov     ax, @data
+    194	00AC  8E D8		     mov     ds, ax
     195
-    196	00B0			     skip_spaces_loop:
-    197	00B0  80 3C 20		     cmp byte ptr ds:[si], ' '
-    198	00B3  75 03		     jne skip_spaces_end
-    199	00B5  46		     inc si
-    200	00B6  EB F8		     jmp skip_spaces_loop
-    201	00B8			     skip_spaces_end:
-    202	00B8  C3		     ret
-    203
-    204	00B9			     skip_spaces ENDP
-    205
-    206	00B9			     read_filename PROC	near
+    196	00AE  BA 0000r		     mov     dx, offset	apie
+    197	00B1  B4 09		     mov     ah, 09h
+    198	00B3  CD 21		     int     21h
+    199
+    200	00B5  EB 09 90		     jmp     _end
+    201
+    202	00B8			     closeF:
+    203				     ;;	uzdaryti dest
+    204	00B8  B4 3E		     mov     ah, 3eh		     ; uzdaryti
+    205	00BA  8B 1E 00CDr	     mov     bx, destFHandle
+    206	00BE  CD 21		     int     21h
     207
-    208	00B9  50		     push    ax
-    209	00BA  E8 FFF3		     call    skip_spaces
-    210	00BD			     read_filename_start:
-    211	00BD  80 3C 0D		     cmp     byte ptr ds:[si], 13    ; jei nera	parametru
-    212	00C0  74 05		     je	     read_filename_end	     ; tai taip, tai baigtas failo vedimas
-    213	00C2  80 3C 20		     cmp     byte ptr ds:[si], ' '   ; jei tarpas
-    214	00C5  75 05		     jne     read_filename_next	     ; tai praleisti visus tarpus, ir sokti prie kito parametro
-    215	00C7			     read_filename_end:
-    216	00C7  B0 24		     mov     al, '$'		     ; irasyti '$' gale
-    217	00C9  AA		     stosb			     ; Store AL	at address ES:(E)DI, di	= di + 1
-    218	00CA  58		     pop     ax
-    219	00CB  C3		     ret
-    220	00CC			     read_filename_next:
-    221	00CC  AC		     lodsb			     ; uzkrauna	kita simboli
-    222	00CD  AA		     stosb			     ; Store AL	at address ES:(E)DI, di	= di + 1
-    223	00CE  EB ED		     jmp read_filename_start
-    224
-    225	00D0			     read_filename ENDP
-    226
-    227
-    228	00D0			     IntegerToHexFromMap PROC
-Turbo Assembler	 Version 3.2	    12/14/15 17:17:44	    Page 5
+    208	00C0			     _end:
+    209	00C0  B8 4C00		     mov     ax, 4c00h
+    210	00C3  CD 21		     int     21h
+    211
+    212	00C5			     err_source:
+    213	00C5  B8 0000s		     mov     ax, @data
+    214	00C8  8E D8		     mov     ds, ax
+    215
+    216	00CA  BA 0041r		     mov     dx, offset	err_s
+    217	00CD  B4 09		     mov     ah, 09h
+    218	00CF  CD 21		     int     21h
+    219
+    220	00D1  BA 00BCr		     mov     dx, offset	sourceF
+    221	00D4  CD 21		     int     21h
+    222
+    223	00D6  B8 4C01		     mov     ax, 4c01h
+    224	00D9  CD 21		     int     21h
+    225
+    226	00DB			     err_destination:
+    227	00DB  B8 0000s		     mov     ax, @data
+    228	00DE  8E D8		     mov     ds, ax
+Turbo Assembler	 Version 3.2	    12/15/15 11:41:57	    Page 5
 dis.ASM
 
 
 
-    229	00D0  BE 0071r			 mov si, OFFSET	Hex_Map		 ; Pointer to hex-character table
-    230
-    231	00D3  8B D8			 mov bx, ax			 ; BX =	argument AX
-    232	00D5  81 E3 00FF		 and bx, 00FFh			 ; Clear BH (just to be	on the safe side)
-    233	00D9  D1 EB D1 EB D1 EB	D1+	 shr bx, 4			 ; Isolate high	nibble (i.e. 4 bits)
-    234	      EB
-    235	00E1  8A 10			 mov dl, [si+bx]		 ; Read	hex-character from the table
-    236	00E3  88 15			 mov [di+0], dl			 ; Store character at the first	place in the output string
-    237
-    238	00E5  8B D8			 mov bx, ax			 ; BX =	argument AX (just to be	on the safe side)
-    239	00E7  81 E3 00FF		 and bx, 00FFh			 ; Clear BH (just to be	on the safe side)
-    240	00EB  80 E3 0F			 and bl, 0Fh			 ; Isolate low nibble (i.e. 4 bits)
-    241	00EE  8A 10			 mov dl, [si+bx]		 ; Read	hex-character from the table
-    242	00F0  88 55 01			 mov [di+1], dl			 ; Store character at the second place in the output string
-    243
-    244	00F3  C3			 ret
-    245	00F4			     IntegerToHexFromMap ENDP
-    246
-    247	00F4			     printLineNumber PROC
-    248
-    249	00F4  51		       push cx
-    250	00F5  56		       push si
-    251	00F6  50			     push ax
+    229
+    230	00E0  BA 0012r		     mov     dx, offset	err_d
+    231	00E3  B4 09		     mov     ah, 09h
+    232	00E5  CD 21		     int     21h
+    233
+    234	00E7  BA 00C6r		     mov     dx, offset	destF
+    235	00EA  CD 21		     int     21h
+    236
+    237	00EC  B8 4C02		     mov     ax, 4c02h
+    238	00EF  CD 21		     int     21h
+    239
+    240
+    241				     ;;	procedures
+    242
+    243	00F1			     skip_spaces PROC near
+    244
+    245	00F1			     skip_spaces_loop:
+    246	00F1  80 3C 20		     cmp byte ptr ds:[si], ' '
+    247	00F4  75 03		     jne skip_spaces_end
+    248	00F6  46		     inc si
+    249	00F7  EB F8		     jmp skip_spaces_loop
+    250	00F9			     skip_spaces_end:
+    251	00F9  C3		     ret
     252
-    253	00F7  BF 0081r		       mov di, OFFSET HEX_Out	       ; First argument: pointer
-    254	00FA  A1 006Fr		       mov ax, lineCountH		; Second argument: Integer
-    255	00FD  E8 FFD0		       call IntegerToHexFromMap
+    253	00FA			     skip_spaces ENDP
+    254
+    255	00FA			     read_filename PROC	near
     256
-    257	0100  B9 0002		       mov cx, 2
-    258	0103  B4 40		       mov   ah, 40h
-    259	0105  8B 1E 00BDr	       mov bx, destFHandle
-    260	0109  BA 0081r		       lea dx, HEX_Out
-    261	010C  CD 21		       int 21h
-    262
-    263	010E  BF 0081r		       mov di, OFFSET HEX_Out	       ; First argument: pointer
-    264	0111  A1 006Dr		       mov ax, lineCount	       ; Second	argument: Integer
-    265	0114  E8 FFB9		       call IntegerToHexFromMap
-    266
-    267	0117  B9 0002		       mov cx, 2
-    268	011A  B4 40		       mov   ah, 40h
-    269	011C  8B 1E 00BDr	       mov bx, destFHandle
-    270	0120  BA 0081r		       lea dx, HEX_Out
-    271	0123  CD 21		       int 21h
-    272
-    273	0125  B9 0005		       mov cx, 5
-    274	0128  B4 40		       mov ah, 40h
-    275	012A  8B 1E 00BDr	       mov bx, destFHandle
-    276	012E  BA 0086r		       lea dx, lineStringAdd
-    277	0131  CD 21		       int 21h
-    278
-    279	0133  58			     pop ax
-    280	0134  5E		       pop si
-    281	0135  59		       pop cx
-    282	0136  C3		       ret
-    283	0137			     printLineNumber ENDP
-    284
-    285	0137			     incLineNumber PROC
-Turbo Assembler	 Version 3.2	    12/14/15 17:17:44	    Page 6
+    257	00FA  50		     push    ax
+    258	00FB  E8 FFF3		     call    skip_spaces
+    259	00FE			     read_filename_start:
+    260	00FE  80 3C 0D		     cmp     byte ptr ds:[si], 13    ; jei nera	parametru
+    261	0101  74 05		     je	     read_filename_end	     ; tai taip, tai baigtas failo vedimas
+    262	0103  80 3C 20		     cmp     byte ptr ds:[si], ' '   ; jei tarpas
+    263	0106  75 05		     jne     read_filename_next	     ; tai praleisti visus tarpus, ir sokti prie kito parametro
+    264	0108			     read_filename_end:
+    265	0108  B0 24		     mov     al, '$'		     ; irasyti '$' gale
+    266	010A  AA		     stosb			     ; Store AL	at address ES:(E)DI, di	= di + 1
+    267	010B  58		     pop     ax
+    268	010C  C3		     ret
+    269	010D			     read_filename_next:
+    270	010D  AC		     lodsb			     ; uzkrauna	kita simboli
+    271	010E  AA		     stosb			     ; Store AL	at address ES:(E)DI, di	= di + 1
+    272	010F  EB ED		     jmp read_filename_start
+    273
+    274	0111			     read_filename ENDP
+    275
+    276
+    277	0111			     IntegerToHexFromMap PROC
+    278	0111  56				     push si
+    279
+    280	0112  BE 0071r			 mov si, OFFSET	Hex_Map		 ; Pointer to hex-character table
+    281
+    282	0115  8B D8			 mov bx, ax			 ; BX =	argument AX
+    283	0117  81 E3 00FF		 and bx, 00FFh			 ; Clear BH (just to be	on the safe side)
+    284	011B  D1 EB D1 EB D1 EB	D1+	 shr bx, 4			 ; Isolate high	nibble (i.e. 4 bits)
+    285	      EB
+Turbo Assembler	 Version 3.2	    12/15/15 11:41:57	    Page 6
 dis.ASM
 
 
 
-    286
-    287
-    288	0137			     incLineNumber ENDP
-    289
-    290				       ; --- jei lineCount=255 ir norim	INC, reikia ji prilygint 0 ir lineCountH ++
-    291	0137  81 3E 006Dr 00FF	       cmp [lineCount],	255
-    292	013D  75 0A		       jne nereikTvarkytiDidelioHex
-    293	013F  C7 06 006Dr 0000	       mov [lineCount],	0
-    294	0145  FF 06 006Fr	       inc [lineCountH]
-    295	0149			       nereikTvarkytiDidelioHex:
-    296	0149  FF 06 006Dr	       inc [lineCount]
-    297				       ; ---
-    298	014D  C3		       ret
-    299
-    300				     end START
-Turbo Assembler	 Version 3.2	    12/14/15 17:17:44	    Page 7
+    286	0123  8A 10			 mov dl, [si+bx]		 ; Read	hex-character from the table
+    287	0125  88 15			 mov [di+0], dl			 ; Store character at the first	place in the output string
+    288
+    289	0127  8B D8			 mov bx, ax			 ; BX =	argument AX (just to be	on the safe side)
+    290	0129  81 E3 00FF		 and bx, 00FFh			 ; Clear BH (just to be	on the safe side)
+    291	012D  80 E3 0F			 and bl, 0Fh			 ; Isolate low nibble (i.e. 4 bits)
+    292	0130  8A 10			 mov dl, [si+bx]		 ; Read	hex-character from the table
+    293	0132  88 55 01			 mov [di+1], dl			 ; Store character at the second place in the output string
+    294
+    295	0135  5E				     pop si
+    296	0136  C3			 ret
+    297	0137			     IntegerToHexFromMap ENDP
+    298
+    299	0137			     printLineNumber PROC
+    300
+    301	0137  51		       push cx
+    302	0138  56		       push si
+    303	0139  50			     push ax
+    304
+    305	013A  BF 0081r		       mov di, OFFSET HEX_Out	       ; First argument: pointer
+    306	013D  A1 006Fr		       mov ax, lineCountH		; Second argument: Integer
+    307	0140  E8 FFCE		       call IntegerToHexFromMap
+    308
+    309	0143  B9 0002		       mov cx, 2
+    310	0146  B4 40		       mov   ah, 40h
+    311	0148  8B 1E 00CDr	       mov bx, destFHandle
+    312	014C  BA 0081r		       lea dx, HEX_Out
+    313	014F  CD 21		       int 21h
+    314
+    315	0151  BF 0081r		       mov di, OFFSET HEX_Out	       ; First argument: pointer
+    316	0154  A1 006Dr		       mov ax, lineCount	       ; Second	argument: Integer
+    317	0157  E8 FFB7		       call IntegerToHexFromMap
+    318
+    319	015A  B9 0002		       mov cx, 2
+    320	015D  B4 40		       mov   ah, 40h
+    321	015F  8B 1E 00CDr	       mov bx, destFHandle
+    322	0163  BA 0081r		       lea dx, HEX_Out
+    323	0166  CD 21		       int 21h
+    324
+    325	0168  B9 0003		       mov cx, 3
+    326	016B  B4 40		       mov ah, 40h
+    327	016D  8B 1E 00CDr	       mov bx, destFHandle
+    328	0171  BA 008Br		       lea dx, lineStringAdd
+    329	0174  CD 21		       int 21h
+    330
+    331	0176  58			     pop ax
+    332	0177  5E		       pop si
+    333	0178  59		       pop cx
+    334	0179  C3		       ret
+    335	017A			     printLineNumber ENDP
+    336
+    337	017A			     incLineNumber PROC
+    338					     ; --- jei lineCount=255 ir	norim INC, reikia ji prilygint 0 ir lineCountH ++
+    339	017A  81 3E 006Dr 00FF		     cmp [lineCount], 255
+    340	0180  75 0A			     jne nereikTvarkytiDidelioHex
+    341	0182  C7 06 006Dr 0000		     mov [lineCount], 0
+    342	0188  FF 06 006Fr		     inc [lineCountH]
+Turbo Assembler	 Version 3.2	    12/15/15 11:41:57	    Page 7
+dis.ASM
+
+
+
+    343	018C				     nereikTvarkytiDidelioHex:
+    344	018C  FF 06 006Dr		     inc [lineCount]
+    345					     ; ---
+    346	0190  C3			     ret
+    347	0191			     incLineNumber ENDP
+    348
+    349
+    350	0191			     com_unk PROC
+    351	0191			     com_unk:
+    352
+    353	0191  51		      push cx
+    354
+    355				      ;mov ah, 0
+    356	0192  E8 0043		     call printHexByte
+    357
+    358	0195  B9 0004		     mov cx, 4
+    359	0198  BA 0086r		     lea dx, spaceString
+    360	019B  8B 1E 00CDr	     mov bx, destFHandle
+    361	019F  B4 40		     mov ah, 40h
+    362
+    363	01A1  CD 21		     int 21h
+    364
+    365	01A3  B9 0015		      mov cx, 21
+    366	01A6  B4 40		      mov ah, 40h
+    367	01A8  8B 1E 00CDr	      mov bx, destFHandle
+    368	01AC  BA 009Cr		      lea dx, line_unkn
+    369	01AF  CD 21		      int 21h
+    370
+    371	01B1  59		      pop cx
+    372
+    373	01B2  C3		      ret
+    374	01B3			     com_unk ENDP
+    375
+    376	01B3			     com_iret PROC
+    377	01B3			     com_iret:
+    378
+    379	01B3  51		      push cx
+    380	01B4  B9 000A		      mov cx, 10
+    381	01B7  B4 40		      mov ah, 40h
+    382	01B9  8B 1E 00CDr	      mov bx, destFHandle
+    383	01BD  BA 0091r		      lea dx, line_iret
+    384	01C0  CD 21		      int 21h
+    385	01C2  59		      pop cx
+    386	01C3  C3		      ret
+    387	01C4			     com_iret ENDP
+    388
+    389	01C4			     readToBuff	PROC
+    390	01C4  8B 1E 00C4r	     mov     bx, sourceFHandle
+    391	01C8  BA 00CFr		     mov     dx, offset	buffer	     ; address of buffer in dx
+    392	01CB  B9 002A		     mov     cx, 42			     ; kiek baitu nuskaitysim
+    393	01CE  B4 3F		     mov     ah, 3fh		     ; function	3Fh - read from	file
+    394	01D0  CD 21		     int     21h
+    395
+    396	01D2  8B C8		     mov     cx, ax		     ; bytes actually read
+    397	01D4  3D 0000		     cmp     ax, 0
+    398	01D7  C3		     ret		     ; jei nenuskaite
+    399	01D8			     readToBuff	ENDP
+Turbo Assembler	 Version 3.2	    12/15/15 11:41:57	    Page 8
+dis.ASM
+
+
+
+    400
+    401	01D8			     printHexByte PROC
+    402	01D8  51		     push cx
+    403	01D9  BF 0081r		     mov di, OFFSET HEX_Out
+    404	01DC  E8 FF32		     call IntegerToHexFromMap
+    405	01DF  B9 0002		     mov cx, 2
+    406	01E2  B4 40		     mov ah, 40h
+    407	01E4  8B 1E 00CDr	     mov bx, destFHandle
+    408	01E8  BA 0081r		     lea dx, HEX_Out
+    409	01EB  CD 21		     int 21h
+    410	01ED  59		     pop cx
+    411	01EE  C3		     ret
+    412	01EF			     printHexByte ENDP
+    413
+    414				     end START
+Turbo Assembler	 Version 3.2	    12/15/15 11:41:57	    Page 9
 Symbol Table
 
 
@@ -336,9 +460,9 @@ Symbol Table
 
 Symbol Name			  Type	 Value
 
-??DATE				  Text	 "12/14/15"
+??DATE				  Text	 "12/15/15"
 ??FILENAME			  Text	 "dis	  "
-??TIME				  Text	 "17:17:44"
+??TIME				  Text	 "11:41:57"
 ??VERSION			  Number 0314
 @32BIT				  Text	 0
 @CODE				  Text	 _TEXT
@@ -353,51 +477,64 @@ Symbol Name			  Type	 Value
 @STACK				  Text	 DGROUP
 @WORDSIZE			  Text	 2
 APIE				  Byte	 DGROUP:0000
-ATRENKA				  Near	 _TEXT:005D
-BUFFER				  Byte	 DGROUP:00BF
-CLOSEF				  Near	 _TEXT:0077
-DESTF				  Byte	 DGROUP:00B6
-DESTFHANDLE			  Word	 DGROUP:00BD
+ATRENKA				  Near	 _TEXT:0050
+BUFFER				  Byte	 DGROUP:00CF
+CLOSEF				  Near	 _TEXT:00B8
+COM_IRET			  Near	 _TEXT:01B3
+COM_UNK				  Near	 _TEXT:0191
+DESTF				  Byte	 DGROUP:00C6
+DESTFHANDLE			  Word	 DGROUP:00CD
 ERR_D				  Byte	 DGROUP:0012
-ERR_DESTINATION			  Near	 _TEXT:009A
+ERR_DESTINATION			  Near	 _TEXT:00DB
 ERR_S				  Byte	 DGROUP:0041
-ERR_SOURCE			  Near	 _TEXT:0084
-HELP				  Near	 _TEXT:0068
+ERR_SOURCE			  Near	 _TEXT:00C5
+HELP				  Near	 _TEXT:00A9
+HEXBUFFER			  Byte	 DGROUP:008F
 HEX_MAP				  Byte	 DGROUP:0071
 HEX_OUT				  Byte	 DGROUP:0081
-INCLINENUMBER			  Near	 _TEXT:0137
-INTEGERTOHEXFROMMAP		  Near	 _TEXT:00D0
+INCLINENUMBER			  Near	 _TEXT:017A
+INC_LINECOUNT			  Near	 _TEXT:00A2
+INTEGERTOHEXFROMMAP		  Near	 _TEXT:0111
 LINECOUNT			  Word	 DGROUP:006D
 LINECOUNTH			  Word	 DGROUP:006F
-LINESTRINGADD			  Byte	 DGROUP:0086
-LINE_IRET			  Byte	 DGROUP:008B
-LINE_UNKN			  Byte	 DGROUP:0095
-NEREIKTVARKYTIDIDELIOHEX	  Near	 _TEXT:0149
-PRINTLINENUMBER			  Near	 _TEXT:00F4
-READ_FILENAME			  Near	 _TEXT:00B9
-READ_FILENAME_END		  Near	 _TEXT:00C7
-READ_FILENAME_NEXT		  Near	 _TEXT:00CC
-READ_FILENAME_START		  Near	 _TEXT:00BD
-SKAITOM				  Near	 _TEXT:0036
-SKIP_SPACES			  Near	 _TEXT:00B0
-SKIP_SPACES_END			  Near	 _TEXT:00B8
-SKIP_SPACES_LOOP		  Near	 _TEXT:00B0
-SOURCEF				  Byte	 DGROUP:00AC
-SOURCEFHANDLE			  Word	 DGROUP:00B4
-START				  Near	 _TEXT:0000
-STARTCONVERTING			  Near	 _TEXT:0028
-_6				  Near	 _TEXT:0056
-_END				  Near	 _TEXT:007F
-Turbo Assembler	 Version 3.2	    12/14/15 17:17:44	    Page 8
+LINESTRINGADD			  Byte	 DGROUP:008B
+LINE_HNEWLINE			  Byte	 DGROUP:00B8
+LINE_IN				  Byte	 DGROUP:00B3
+LINE_IRET			  Byte	 DGROUP:0091
+LINE_UNKN			  Byte	 DGROUP:009C
+NEREIKTVARKYTIDIDELIOHEX	  Near	 _TEXT:018C
+NOT_ERR_SOURCE			  Near	 _TEXT:0036
+NOT_IN2				  Near	 _TEXT:0095
+NOT_IRET			  Near	 _TEXT:009F
+PRINTHEXBYTE			  Near	 _TEXT:01D8
+PRINTLINENUMBER			  Near	 _TEXT:0137
+READTOBUFF			  Near	 _TEXT:01C4
+READ_FILENAME			  Near	 _TEXT:00FA
+READ_FILENAME_END		  Near	 _TEXT:0108
+READ_FILENAME_NEXT		  Near	 _TEXT:010D
+READ_FILENAME_START		  Near	 _TEXT:00FE
+SKAITOM				  Near	 _TEXT:0039
+Turbo Assembler	 Version 3.2	    12/15/15 11:41:57	    Page 10
 Symbol Table
 
 
 
+SKIPREFILL			  Near	 _TEXT:0069
+SKIP_SPACES			  Near	 _TEXT:00F1
+SKIP_SPACES_END			  Near	 _TEXT:00F9
+SKIP_SPACES_LOOP		  Near	 _TEXT:00F1
+SOURCEF				  Byte	 DGROUP:00BC
+SOURCEFHANDLE			  Word	 DGROUP:00C4
+SPACESTRING			  Byte	 DGROUP:0086
+START				  Near	 _TEXT:0000
+STARTCONVERTING			  Near	 _TEXT:0028
+_6				  Near	 _TEXT:0049
+_END				  Near	 _TEXT:00C0
 
 Groups & Segments		  Bit Size Align  Combine Class
 
 DGROUP				  Group
   STACK				  16  0100 Para	  Stack	  STACK
-  _DATA				  16  0123 Word	  Public  DATA
-_TEXT				  16  014E Word	  Public  CODE
+  _DATA				  16  0133 Word	  Public  DATA
+_TEXT				  16  01EF Word	  Public  CODE
 

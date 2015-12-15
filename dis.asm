@@ -22,10 +22,13 @@ HEX_Out   DB  "00", 13, 10, '$'   ; string with line feed and '$'-terminator
 
 spaceString  db '     '
 lineStringAdd db ':  ', '$'
+hexBuffer db ' ', '$'
+
 
 line_iret db 'CF', 9, 9, 'IRET',13,10,'$'
 line_unkn db 9, 'Neatpazinta komanda',13,10, '$'
-
+line_in db 9,'in',9,'$'
+line_hNewLine db 'h',13,10, '$'
 
 sourceF   	db 'test.com'
 sourceFHandle	dw ?
@@ -35,12 +38,14 @@ destFHandle 	dw ?
 
 buffer    db 100 dup (?)
 
+
+
 .code
 
 ;div	   1111 011w mod 110 r/m [poslinkis]
 ;idiv    1111 011w mod 111 r/m [poslinkis]
-;in      1110 110w arba 1110 010w portas (vieno baito dydzio betarpiskas operandas)
-;iret	   1100 1111
+    ;in      1110 110w arba 1110 010w portas (vieno baito dydzio betarpiskas operandas)
+    ;iret	   1100 1111
 ;int	   1100 1100 (INT 3) 11001101 kodas (visi kiti int kur kodas-1 baitas)
 ;les     1100 0100 mod reg r/m [poslinkis]  reg-<atm
 ;xchg	   1001 0000 (NOP/XCHG ax,ax) 1001 0xxx (x-registras, kai is x i ax)
@@ -81,29 +86,25 @@ mov	dx, offset sourceF	; failo pavadinimas
 mov	ah, 3dh            	; atidaro faila - komandos kodas
 mov	al, 0              	; 0 - reading, 1-writing, 2-abu
 int	21h			            ; INT 21h / AH= 3Dh - open existing file
-jc	err_source		      ; CF set on error AX = error code.
+jnc	not_err_source		      ; CF set on error AX = error code.
+jmp err_source
+not_err_source:
 mov	sourceFHandle, ax	  ; issaugojam filehandle
 
 skaitom:
-mov	bx, sourceFHandle
-mov	dx, offset buffer       ; address of buffer in dx
-mov	cx, 20              		; kiek baitu nuskaitysim
-mov	ah, 3fh               	; function 3Fh - read from file
-int	21h
 
-mov	cx, ax                	; bytes actually read
-cmp	ax, 0		               	; jei nenuskaite
+call readToBuff
+
 jne	_6			; tai ne pabaiga
 
 mov	bx, sourceFHandle	; pabaiga skaitomo failo
 mov	ah, 3eh			; uzdaryti
 int	21h
-jmp _end
+jmp closeF
 
 _6:
 mov	si, offset buffer	; skaitoma is cia
 mov	bx, destFHandle		; rasoma i cia
-
 
 ; cia prasideda pagrindine logika (apdoroja kiekviena baita)
 atrenka:
@@ -111,6 +112,45 @@ lodsb  				; Load byte at address DS:(E)SI into AL
 
 call printLineNumber
 
+mov bl, al
+and bl, 11111110b
+cmp bl, 11100100b
+jne not_in2
+
+;TODO in proc  (galimas erroras)
+call printHexByte
+cmp cx, 1
+jne skipRefill
+call readToBuff
+skipRefill:
+
+lodsb
+dec cx
+call printHexByte
+call incLineNumber
+
+;TODO normalia printString funkcija, suskaiciuot cx fja
+push cx
+mov cx, 4
+mov ah, 40h
+mov bx, destFHandle
+lea dx, line_in
+int 21h
+
+call printHexByte
+
+mov cx, 3
+mov ah, 40h
+mov bx, destFHandle
+lea dx, line_hNewLine
+int 21h
+
+pop cx
+
+
+jmp inc_lineCount
+
+not_in2:
 
 cmp al, 11001111b
 jne not_iret
@@ -120,11 +160,12 @@ not_iret:
 
 call com_unk
 
+
 inc_lineCount:
 call incLineNumber
 
 loop	atrenka
-loop	skaitom
+jmp skaitom
 
 help:
 mov	ax, @data
@@ -271,15 +312,15 @@ printLineNumber PROC
 printLineNumber ENDP
 
 incLineNumber PROC
-; --- jei lineCount=255 ir norim INC, reikia ji prilygint 0 ir lineCountH ++
-cmp [lineCount], 255
-jne nereikTvarkytiDidelioHex
-mov [lineCount], 0
-inc [lineCountH]
-nereikTvarkytiDidelioHex:
-inc [lineCount]
-; ---
-ret
+	; --- jei lineCount=255 ir norim INC, reikia ji prilygint 0 ir lineCountH ++
+	cmp [lineCount], 255
+	jne nereikTvarkytiDidelioHex
+	mov [lineCount], 0
+	inc [lineCountH]
+	nereikTvarkytiDidelioHex:
+	inc [lineCount]
+	; ---
+	ret
 incLineNumber ENDP
 
 
@@ -289,20 +330,14 @@ com_unk:
  push cx
 
  ;mov ah, 0
- mov di, OFFSET HEX_Out
- call IntegerToHexFromMap
- mov cx, 2
- mov ah, 40h
- mov bx, destFHandle
- lea dx, HEX_Out
- int 21h
+call printHexByte
 
-	mov cx, 4
-	lea dx, spaceString
-	 mov bx, destFHandle
-	 mov ah, 40h
+mov cx, 4
+lea dx, spaceString
+mov bx, destFHandle
+mov ah, 40h
 
-	int 21h
+int 21h
 
  mov cx, 21
  mov ah, 40h
@@ -327,5 +362,30 @@ com_iret:
  pop cx
  ret
 com_iret ENDP
+
+readToBuff PROC
+mov	bx, sourceFHandle
+mov	dx, offset buffer       ; address of buffer in dx
+mov	cx, 100            		; kiek baitu nuskaitysim
+mov	ah, 3fh               	; function 3Fh - read from file
+int	21h
+
+mov	cx, ax                	; bytes actually read
+cmp	ax, 0
+ret              	; jei nenuskaite
+readToBuff ENDP
+
+printHexByte PROC
+push cx
+mov di, OFFSET HEX_Out
+call IntegerToHexFromMap
+mov cx, 2
+mov ah, 40h
+mov bx, destFHandle
+lea dx, HEX_Out
+int 21h
+pop cx
+ret
+printHexByte ENDP
 
 end START

@@ -5,30 +5,91 @@
 ;; jei destination failas jau egzistuoja, jis yra isvalomas
 ;; jei source failas nenurodytas - skaito iš stdin iki tuščios naujos eilutės
 ;; galima nurodyti daugiau nei vieną source failą - juos sujungia
+
+;skaitomos komandos
+;div	   1111 011w mod 110 r/m [poslinkis]
+;idiv    1111 011w mod 111 r/m [poslinkis]
+;in      1110 110w arba 1110 010w portas (vieno baito dydzio betarpiskas operandas)
+;iret	   1100 1111
+;int	   1100 1100 (INT 3) 11001101 kodas (visi kiti int kur kodas-1 baitas)
+;les     1100 0100 mod reg r/m [poslinkis]  reg-<atm
+;xchg	   1001 0000 (NOP/XCHG ax,ax) 1001 0xxx (x-registras, kai is x i ax)
+;test	   1000 010w mod reg r/m [poslinkis]
+
+
+
 .model small
 .stack 100H
 
 .data
 
+;pranesimai
 apie    		db 'mini disasembleris'
 err_d    		db 'Destination failo nepavyko atidaryti rasymui',13,10,'$'
 err_s    		db 'Source failo nepavyko atidaryti skaitymui',13,10,'$'
+
+;skaitomos eilutes numerio formavimas
 lineCount 	dw 0   ;desinys  baitas eiles nr skaiciaus
 lineCountH	dw 1   ;kairys  baitas eiles nr skaiciaus
 
-
+;hex skaiciaus spausdinimas
 HEX_Map   DB  '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'
 HEX_Out   DB  "00", 13, 10, '$'   ; string with line feed and '$'-terminator
-
-spaceString  db '     '
 lineStringAdd db ':  ', '$'
 hexBuffer db ' ', '$'
 
 
-line_iret db 'CF', 9, 9, 'IRET',13,10,'$'
-line_unkn db 9, 'Neatpazinta komanda',13,10, '$'
-line_in db 9,'in',9,'$'
+;formatavimas
+line_doubleTab db 9, 9, '$'
 line_hNewLine db 'h',13,10, '$'
+line_NewLine db 13,10,'$'
+;neatpazinta komanda
+line_unkn db 9, 9, 'Neatpazinta komanda',13,10, '$'
+
+;komandos-------------------------------
+
+line_in db 9,'in',9,'$'
+						;offset
+com_names 	db	'DIV$'	;0
+			db	'IDIV$'	;4
+			db	'IN$'	;9
+			db	'IRET$'	;12
+			db	'INT$'	;17
+			db	'LES$'	;21
+			db	'XCHG$' ;26
+			db	'TEST$' ;31
+;---------------------------------------
+
+;registrai------------------------------
+					;offset
+mod11w0reg	db 'al$';0
+			db 'cl$';3
+			db 'dl$';6
+			db 'bl$';9
+			db 'ah$';12
+			db 'ch$';15
+			db 'dh$';18
+			db 'bh$';21
+mod11w1reg	db 'ax$';0
+			db 'cx$';3
+			db 'dx$';6
+			db 'bx$';9
+			db 'bp$';12
+			db 'sp$';15
+			db 'si$';18
+			db 'di$';21
+EAdress		db '[bx+si$' ;0
+			db '[bx+di$' ;7
+			db '[bp+si$' ;14
+			db '[bp+di$' ;21
+			db '[si   $' ;28
+			db '[di   $' ;35
+			db '[bp   $' ;42
+			db '[bx   $' ;49
+;---------------------------------------
+
+
+
 
 sourceF   	db 'test.com'
 sourceFHandle	dw ?
@@ -41,16 +102,6 @@ buffer    db 100 dup (?)
 
 
 .code
-
-;div	   1111 011w mod 110 r/m [poslinkis]
-;idiv    1111 011w mod 111 r/m [poslinkis]
-    ;in      1110 110w arba 1110 010w portas (vieno baito dydzio betarpiskas operandas)
-    ;iret	   1100 1111
-;int	   1100 1100 (INT 3) 11001101 kodas (visi kiti int kur kodas-1 baitas)
-;les     1100 0100 mod reg r/m [poslinkis]  reg-<atm
-;xchg	   1001 0000 (NOP/XCHG ax,ax) 1001 0xxx (x-registras, kai is x i ax)
-;test	   1000 010w mod reg r/m [poslinkis]
-
 
 START:
 mov	ax, @data
@@ -112,52 +163,27 @@ lodsb  				; Load byte at address DS:(E)SI into AL
 
 call printLineNumber
 
+;in portas
 mov bl, al
 and bl, 11111110b
 cmp bl, 11100100b
 jne not_in2
+call com_in2
 
-;TODO in proc  (galimas erroras)
-call printHexByte
-cmp cx, 1
-jne skipRefill
-call readToBuff
-skipRefill:
-
-lodsb
-dec cx
-call printHexByte
-call incLineNumber
-
-;TODO normalia printString funkcija, suskaiciuot cx fja
-push cx
-mov cx, 4
-mov ah, 40h
-mov bx, destFHandle
-lea dx, line_in
-int 21h
-
-call printHexByte
-
-mov cx, 3
-mov ah, 40h
-mov bx, destFHandle
-lea dx, line_hNewLine
-int 21h
-
-pop cx
-
-
-jmp inc_lineCount
-
+;IRET
 not_in2:
-
 cmp al, 11001111b
 jne not_iret
 call com_iret
 jmp inc_lineCount
-not_iret:
 
+;INT su kodu
+not_iret:
+cmp al, 11001101b
+jne not_int2
+call com_int2
+
+not_int2:
 call com_unk
 
 
@@ -167,6 +193,10 @@ call incLineNumber
 loop	atrenka
 jmp skaitom
 
+
+
+
+;----------------------------------
 help:
 mov	ax, @data
 mov	ds, ax
@@ -327,41 +357,33 @@ incLineNumber ENDP
 com_unk PROC
 com_unk:
 
- push cx
-
- ;mov ah, 0
 call printHexByte
-
-mov cx, 4
-lea dx, spaceString
-mov bx, destFHandle
-mov ah, 40h
-
-int 21h
-
- mov cx, 21
+push cx
+ mov cx, 23
  mov ah, 40h
  mov bx, destFHandle
  lea dx, line_unkn
  int 21h
-
  pop cx
-
  ret
 com_unk ENDP
 
 com_iret PROC
 com_iret:
-
+ call printHexByte
+ call printDoubleTab
  push cx
- mov cx, 10
+ mov cx, 4
  mov ah, 40h
  mov bx, destFHandle
- lea dx, line_iret
+ mov dx, offset com_names + 12
  int 21h
  pop cx
+ call printNewline
  ret
 com_iret ENDP
+
+
 
 readToBuff PROC
 mov	bx, sourceFHandle
@@ -387,5 +409,100 @@ int 21h
 pop cx
 ret
 printHexByte ENDP
+
+;formatavimo proceduros
+printDoubleTab PROC
+ push cx
+ mov cx, 2
+ mov ah, 40h
+ mov bx, destFHandle
+ lea dx, line_doubleTab
+ int 21h
+ pop cx
+ ret
+printDoubleTab ENDP
+
+printHNewline PROC
+ push cx
+ mov cx, 3
+ mov ah, 40h
+ mov bx, destFHandle
+ lea dx, line_hNewLine
+ int 21h
+ pop cx
+ ret
+printHNewline ENDP
+
+printNewline PROC
+ push cx
+ mov cx, 2
+ mov ah, 40h
+ mov bx, destFHandle
+ lea dx, line_NewLine
+ int 21h
+ pop cx
+ ret
+printNewline ENDP
+
+
+;-------------
+com_in2 PROC
+call printHexByte
+cmp cx, 1
+jne skipRefillin2
+call readToBuff
+skipRefillin2:
+lodsb
+push ax
+dec cx
+call printHexByte
+call incLineNumber
+call printDoubleTab
+;TODO normalia printString funkcija, suskaiciuot cx fja
+push cx
+mov cx, 2
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset com_names + 9
+int 21h
+pop cx
+
+call printDoubleTab
+pop ax
+call printHexByte
+call printHNewline
+jmp inc_lineCount
+com_in2 ENDP
+;---------
+
+;-------------
+com_int2 PROC
+call printHexByte
+cmp cx, 1
+jne skipRefillint2
+call readToBuff
+skipRefillint2:
+lodsb
+push ax
+dec cx
+call printHexByte
+call incLineNumber
+call printDoubleTab
+;TODO normalia printString funkcija, suskaiciuot cx fja
+push cx
+mov cx, 3
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset com_names + 17
+int 21h
+pop cx
+
+call printDoubleTab
+pop ax
+call printHexByte
+call printHNewline
+jmp inc_lineCount
+com_int2 ENDP
+;---------
 
 end START

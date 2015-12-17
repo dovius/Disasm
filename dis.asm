@@ -524,6 +524,15 @@ com_int ENDP
 
 ;----------------------IN
 com_in PROC
+ and bl, 00000001b
+ cmp bl, 0
+ jne in_ax
+ mov dx, offset mod11w0reg+0
+ jmp print_in
+ in_ax:
+ mov dx, offset mod11w1reg+0
+ print_in:
+ push dx
  call printHexByte
  call printDoubleTab
  push cx
@@ -535,11 +544,11 @@ com_in PROC
  pop cx
  call printDoubleTab
  
+pop dx 
 push cx
 mov cx, 2
 mov ah, 40h
 mov bx, destFHandle
-mov dx, offset mod11w1reg + 0
 int 21h
 pop cx
 call printOperandSeparator

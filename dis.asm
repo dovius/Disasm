@@ -436,6 +436,17 @@ int 21h
 pop cx
 
 call printDoubleTab
+
+push cx
+mov cx, 2
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset mod11w0reg + 0
+int 21h
+pop cx
+
+call printOperandSeparator
+
 pop ax
 call printHexByte
 call printHNewline
@@ -523,9 +534,24 @@ com_in PROC
  int 21h
  pop cx
  call printDoubleTab
- mov al, 03h
- call printHexByte
- call printHNewline
+ 
+push cx
+mov cx, 2
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset mod11w1reg + 0
+int 21h
+pop cx
+call printOperandSeparator
+push cx
+mov cx, 2
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset mod11w1reg + 6
+int 21h
+pop cx
+ 
+ call printNewline
  jmp inc_lineCount
  ret
 com_in ENDP

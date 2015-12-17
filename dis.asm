@@ -14,6 +14,7 @@
 ;int	   1100 1100 (INT 3) 11001101 kodas (visi kiti int kur kodas-1 baitas)
 ;les     1100 0100 mod reg r/m [poslinkis]  reg-<atm
 ;xchg	   1001 0000 (NOP/XCHG ax,ax) 1001 0xxx (x-registras, kai is x i ax)
+;xchg      1000 011w mod reg r/m [poslinkis] – XCHG registras  registras/atmintis 
 ;test	   1000 010w mod reg r/m [poslinkis]
 
 
@@ -43,6 +44,7 @@ hexBuffer db ' ', '$'
 line_doubleTab db 9, 9, '$'
 line_hNewLine db 'h',13,10, '$'
 line_NewLine db 13,10,'$'
+line_OperandSeparator db ',', ' ', '$'
 ;neatpazinta komanda
 line_unkn db 9, 9, 'Neatpazinta komanda',13,10, '$'
 
@@ -56,8 +58,8 @@ com_names 	db	'DIV$'	;0
 			db	'IRET$'	;12
 			db	'INT$'	;17
 			db	'LES$'	;21
-			db	'XCHG$' ;26
-			db	'TEST$' ;31
+			db	'XCHG$' ;25
+			db	'TEST$' ;30
 ;---------------------------------------
 
 ;registrai------------------------------
@@ -163,27 +165,46 @@ lodsb  				; Load byte at address DS:(E)SI into AL
 
 call printLineNumber
 
-;in portas
+;in portas****************************
 mov bl, al
 and bl, 11111110b
 cmp bl, 11100100b
 jne not_in2
 call com_in2
 
-;IRET
+;in be porto**************************
 not_in2:
+cmp bl, 11101100b
+jne not_in
+call com_in
+
+;XCHG********************************
+not_in:
+and bl, 11111000b
+cmp bl, 10010000b
+jne not_xchg
+call com_xchg
+
+;IRET********************************
+not_xchg:
 cmp al, 11001111b
 jne not_iret
 call com_iret
-jmp inc_lineCount
 
-;INT su kodu
+;INT su kodu************************
 not_iret:
 cmp al, 11001101b
 jne not_int2
 call com_int2
 
+; INT 3*****************************
 not_int2:
+cmp al, 11001100b
+jne not_int
+call com_int
+
+; Nezinoma komanda******************
+not_int:
 call com_unk
 
 
@@ -355,8 +376,6 @@ incLineNumber ENDP
 
 
 com_unk PROC
-com_unk:
-
 call printHexByte
 push cx
  mov cx, 23
@@ -367,23 +386,6 @@ push cx
  pop cx
  ret
 com_unk ENDP
-
-com_iret PROC
-com_iret:
- call printHexByte
- call printDoubleTab
- push cx
- mov cx, 4
- mov ah, 40h
- mov bx, destFHandle
- mov dx, offset com_names + 12
- int 21h
- pop cx
- call printNewline
- ret
-com_iret ENDP
-
-
 
 readToBuff PROC
 mov	bx, sourceFHandle
@@ -409,6 +411,192 @@ int 21h
 pop cx
 ret
 printHexByte ENDP
+
+
+;------------- IN su portu
+com_in2 PROC
+call printHexByte
+cmp cx, 1
+jne skipRefillin2
+call readToBuff
+skipRefillin2:
+lodsb
+push ax
+dec cx
+call printHexByte
+call incLineNumber
+call printDoubleTab
+;TODO normalia printString funkcija, suskaiciuot cx fja
+push cx
+mov cx, 2
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset com_names + 9
+int 21h
+pop cx
+
+call printDoubleTab
+pop ax
+call printHexByte
+call printHNewline
+jmp inc_lineCount
+com_in2 ENDP
+;---------
+
+;------------- INT su kodu
+com_int2 PROC
+call printHexByte
+cmp cx, 1
+jne skipRefillint2
+call readToBuff
+skipRefillint2:
+lodsb
+push ax
+dec cx
+call printHexByte
+call incLineNumber
+call printDoubleTab
+;TODO normalia printString funkcija, suskaiciuot cx fja
+push cx
+mov cx, 3
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset com_names + 17
+int 21h
+pop cx
+
+call printDoubleTab
+pop ax
+call printHexByte
+call printHNewline
+jmp inc_lineCount
+ret
+com_int2 ENDP
+;---------
+
+;----------------------IRET
+com_iret PROC
+ call printHexByte
+ call printDoubleTab
+ push cx
+ mov cx, 4
+ mov ah, 40h
+ mov bx, destFHandle
+ mov dx, offset com_names + 12
+ int 21h
+ pop cx
+ call printNewline
+ jmp inc_lineCount
+ ret
+com_iret ENDP
+;---------
+
+;----------------------INT 3
+com_int PROC
+ call printHexByte
+ call printDoubleTab
+ push cx
+ mov cx, 3
+ mov ah, 40h
+ mov bx, destFHandle
+ mov dx, offset com_names + 17
+ int 21h
+ pop cx
+ call printDoubleTab
+ mov al, 03h
+ call printHexByte
+ call printNewline
+ jmp inc_lineCount
+ ret
+com_int ENDP
+;---------
+
+;----------------------IN
+com_in PROC
+ call printHexByte
+ call printDoubleTab
+ push cx
+ mov cx, 2
+ mov ah, 40h
+ mov bx, destFHandle
+ mov dx, offset com_names + 9
+ int 21h
+ pop cx
+ call printDoubleTab
+ mov al, 03h
+ call printHexByte
+ call printHNewline
+ jmp inc_lineCount
+ ret
+com_in ENDP
+;---------
+
+;----------------------XCHG
+com_xchg PROC
+push ax
+call printHexByte
+call printDoubleTab
+pop ax
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000000b ; ax is ax
+jne xchgnotax
+mov dx, offset mod11w1reg + 0
+jmp xchgprint
+xchgnotax:
+cmp bl, 00000001b ; cx is ax
+jne xchgnotcx
+mov dx, offset mod11w1reg + 3
+jmp xchgprint
+
+xchgnotcx:
+cmp bl, 00000010b ; dx is ax
+jne xchgnotdx
+mov dx, offset mod11w1reg + 6
+jmp xchgprint
+
+xchgnotdx: ; turi buti bx
+mov dx, offset mod11w1reg + 9
+jmp xchgprint
+
+xchgprint:
+push dx
+
+push cx
+mov cx, 4
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset com_names + 25
+int 21h
+pop cx
+
+
+call printDoubleTab
+
+pop dx
+push cx
+mov cx, 2
+mov ah, 40h
+mov bx, destFHandle
+
+int 21h
+pop cx
+
+
+call printOperandSeparator
+
+push cx
+mov cx, 2
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset mod11w1reg + 0
+;mov dx, offset com_names
+int 21h
+pop cx
+call printNewline
+jmp inc_lineCount
+com_xchg ENDP
+;---------
 
 ;formatavimo proceduros
 printDoubleTab PROC
@@ -444,65 +632,16 @@ printNewline PROC
  ret
 printNewline ENDP
 
+printOperandSeparator PROC
+ push cx
+ mov cx, 2
+ mov ah, 40h
+ mov bx, destFHandle
+ lea dx, line_OperandSeparator
+ int 21h
+ pop cx
+ ret
+printOperandSeparator ENDP
 
-;-------------
-com_in2 PROC
-call printHexByte
-cmp cx, 1
-jne skipRefillin2
-call readToBuff
-skipRefillin2:
-lodsb
-push ax
-dec cx
-call printHexByte
-call incLineNumber
-call printDoubleTab
-;TODO normalia printString funkcija, suskaiciuot cx fja
-push cx
-mov cx, 2
-mov ah, 40h
-mov bx, destFHandle
-mov dx, offset com_names + 9
-int 21h
-pop cx
-
-call printDoubleTab
-pop ax
-call printHexByte
-call printHNewline
-jmp inc_lineCount
-com_in2 ENDP
-;---------
-
-;-------------
-com_int2 PROC
-call printHexByte
-cmp cx, 1
-jne skipRefillint2
-call readToBuff
-skipRefillint2:
-lodsb
-push ax
-dec cx
-call printHexByte
-call incLineNumber
-call printDoubleTab
-;TODO normalia printString funkcija, suskaiciuot cx fja
-push cx
-mov cx, 3
-mov ah, 40h
-mov bx, destFHandle
-mov dx, offset com_names + 17
-int 21h
-pop cx
-
-call printDoubleTab
-pop ax
-call printHexByte
-call printHNewline
-jmp inc_lineCount
-com_int2 ENDP
-;---------
 
 end START

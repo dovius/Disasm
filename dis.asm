@@ -14,10 +14,8 @@
 ;int	   1100 1100 (INT 3) 11001101 kodas (visi kiti int kur kodas-1 baitas)
 ;les     1100 0100 mod reg r/m [poslinkis]  reg-<atm
 ;xchg	   1001 0000 (NOP/XCHG ax,ax) 1001 0xxx (x-registras, kai is x i ax)
-;xchg      1000 011w mod reg r/m [poslinkis] – XCHG registras  registras/atmintis 
+;xchg      1000 011w mod reg r/m [poslinkis] – XCHG registras  registras/atmintis
 ;test	   1000 010w mod reg r/m [poslinkis]
-
-
 
 .model small
 .stack 100H
@@ -93,15 +91,13 @@ EAdress		db '[bx+si$' ;0
 
 
 
-sourceF   	db 'test.com'
+sourceF   	db 'test.exe'
 sourceFHandle	dw ?
 
 destF   	db 'asm.asm'
 destFHandle 	dw ?
 
 buffer    db 100 dup (?)
-
-
 
 .code
 
@@ -171,42 +167,59 @@ and bl, 11111110b
 cmp bl, 11100100b
 jne not_in2
 call com_in2
+jmp com_recognized
+not_in2:
 
 ;in be porto**************************
-not_in2:
+mov bl, al
 cmp bl, 11101100b
 jne not_in
 call com_in
+jmp com_recognized
+not_in:
 
 ;XCHG********************************
-not_in:
+mov bl, al
 and bl, 11111000b
 cmp bl, 10010000b
 jne not_xchg
 call com_xchg
+jmp com_recognized
+not_xchg:
 
 ;IRET********************************
-not_xchg:
 cmp al, 11001111b
 jne not_iret
 call com_iret
+jmp com_recognized
+not_iret:
 
 ;INT su kodu************************
-not_iret:
 cmp al, 11001101b
 jne not_int2
 call com_int2
+jmp com_recognized
+not_int2:
 
 ; INT 3*****************************
-not_int2:
 cmp al, 11001100b
 jne not_int
 call com_int
+jmp com_recognized
+not_int:
+
+; LES*******************************
+cmp al, 11000100b
+jne not_les
+;call com_les
+jmp not_les
+jmp com_recognized
+not_les:
 
 ; Nezinoma komanda******************
-not_int:
 call com_unk
 
+com_recognized:
 
 inc_lineCount:
 call incLineNumber
@@ -368,6 +381,7 @@ incLineNumber PROC
 	jne nereikTvarkytiDidelioHex
 	mov [lineCount], 0
 	inc [lineCountH]
+	dec [lineCount]
 	nereikTvarkytiDidelioHex:
 	inc [lineCount]
 	; ---
@@ -378,11 +392,15 @@ incLineNumber ENDP
 com_unk PROC
 call printHexByte
 push cx
+push ax
+
  mov cx, 23
  mov ah, 40h
  mov bx, destFHandle
  lea dx, line_unkn
  int 21h
+
+ pop ax
  pop cx
  ret
 com_unk ENDP
@@ -396,11 +414,13 @@ int	21h
 
 mov	cx, ax                	; bytes actually read
 cmp	ax, 0
-ret              	; jei nenuskaite
+ret
 readToBuff ENDP
 
 printHexByte PROC
 push cx
+push ax
+
 mov di, OFFSET HEX_Out
 call IntegerToHexFromMap
 mov cx, 2
@@ -408,6 +428,8 @@ mov ah, 40h
 mov bx, destFHandle
 lea dx, HEX_Out
 int 21h
+
+pop ax
 pop cx
 ret
 printHexByte ENDP
@@ -543,8 +565,8 @@ com_in PROC
  int 21h
  pop cx
  call printDoubleTab
- 
-pop dx 
+
+pop dx
 push cx
 mov cx, 2
 mov ah, 40h
@@ -559,7 +581,7 @@ mov bx, destFHandle
 mov dx, offset mod11w1reg + 6
 int 21h
 pop cx
- 
+
  call printNewline
  jmp inc_lineCount
  ret
@@ -630,7 +652,28 @@ int 21h
 pop cx
 call printNewline
 jmp inc_lineCount
+
+ret
 com_xchg ENDP
+
+
+; ------------------------------ LES
+com_les PROC
+
+call printHexByte
+cmp cx, 1
+jne skipRefillLes
+call readToBuff
+skipRefillLes:
+lodsb
+push ax
+dec cx
+call printHexByte
+call incLineNumber
+pop ax
+ret
+com_les ENDP
+
 ;---------
 
 ;formatavimo proceduros

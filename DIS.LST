@@ -1,4 +1,4 @@
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 1
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 1
 dis.ASM
 
 
@@ -60,7 +60,7 @@ dis.ASM
      55
      56
      57				     ;formatavimas
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 2
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 2
 dis.ASM
 
 
@@ -122,7 +122,7 @@ dis.ASM
     112	0146  2B					      db '+' ;2
     113				     ;---------------------------------------
     114
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 3
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 3
 dis.ASM
 
 
@@ -184,7 +184,7 @@ dis.ASM
     169	0028  BA 0147r		     mov     dx, offset	sourceF	     ; failo pavadinimas
     170	002B  B4 3D		     mov     ah, 3dh		     ; atidaro faila - komandos	kodas
     171	002D  B0 00		     mov     al, 0		     ; 0 - reading, 1-writing, 2-abu
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 4
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 4
 dis.ASM
 
 
@@ -246,7 +246,7 @@ dis.ASM
     226
     227				     ;IRET********************************
     228	0084  3C CF		     cmp al, 11001111b
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 5
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 5
 dis.ASM
 
 
@@ -308,7 +308,7 @@ dis.ASM
     283	00CC  BA 0000r		     mov     dx, offset	apie
     284	00CF  B4 09		     mov     ah, 09h
     285	00D1  CD 21		     int     21h
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 6
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 6
 dis.ASM
 
 
@@ -370,7 +370,7 @@ dis.ASM
     340	0118			     skip_spaces ENDP
     341
     342	0118			     read_filename PROC	near
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 7
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 7
 dis.ASM
 
 
@@ -432,7 +432,7 @@ dis.ASM
     397	0161  E8 FFCB		       call IntegerToHexFromMap
     398
     399	0164  B9 0002		       mov cx, 2
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 8
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 8
 dis.ASM
 
 
@@ -494,7 +494,7 @@ dis.ASM
     454	01CB  58		      pop ax
     455	01CC  59		      pop cx
     456	01CD  5F		      pop di
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 9
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 9
 dis.ASM
 
 
@@ -556,7 +556,7 @@ dis.ASM
     511	021D  8B 1E 0158r	     mov bx, destFHandle
     512	0221  BA 00BFr		     mov dx, offset com_names +	9
     513	0224  CD 21		     int 21h
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 10
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 10
 dis.ASM
 
 
@@ -618,7 +618,7 @@ dis.ASM
     568	027C  E8 FF64		      call printHexByte
     569	027F  E8 04F5		      call printDoubleTab
     570	0282  51		      push cx
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 11
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 11
 dis.ASM
 
 
@@ -680,7 +680,7 @@ dis.ASM
     625	02E9  5A		     pop dx
     626	02EA  51		     push cx
     627	02EB  B9 0002		     mov cx, 2
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 12
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 12
 dis.ASM
 
 
@@ -742,7 +742,7 @@ dis.ASM
     682	0350  BA 00CFr		     mov dx, offset com_names +	25
     683	0353  CD 21		     int 21h
     684	0355  59		     pop cx
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 13
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 13
 dis.ASM
 
 
@@ -804,7 +804,7 @@ dis.ASM
     739
     740				     ; ziurim DIV ar IDIV
     741	03AB  8A D8		     mov bl, al
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 14
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 14
 dis.ASM
 
 
@@ -866,7 +866,7 @@ dis.ASM
     796	0407  E8 FD92		     call incLineNumber
     797
     798				     ; i rbuff idedu komandos pav.
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 15
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 15
 dis.ASM
 
 
@@ -928,7 +928,7 @@ dis.ASM
     853	0466  8A D8		     mov bl, al
     854	0468  80 E3 C0		     and bl, 11000000b
     855	046B  80 FB 80		     cmp bl, 10000000b
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 16
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 16
 dis.ASM
 
 
@@ -990,7 +990,7 @@ dis.ASM
     910
     911				     ;;----------------------------- 1byte
     912	04D1  E8 0061		     call scanREG
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 17
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 17
 dis.ASM
 
 
@@ -1052,7 +1052,7 @@ dis.ASM
     967
     968	052F  C6 06 0222r 00	     mov [regBufferCount], 0
     969	0534  C3		     ret
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 18
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 18
 dis.ASM
 
 
@@ -1114,7 +1114,7 @@ dis.ASM
    1024	0598  75 08		     jne LESregnot010
    1025	059A  B7 02		     mov bh, 2
    1026	059C  BE 00F7r		     mov si, offset mod11w1reg + 6
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 19
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 19
 dis.ASM
 
 
@@ -1176,7 +1176,7 @@ dis.ASM
    1081	05FD  75 08		     jne w0rmNot010
    1082	05FF  B7 02		     mov bh, 2
    1083	0601  BE 00F7r		     mov si, offset mod11w1reg + 6
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 20
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 20
 dis.ASM
 
 
@@ -1238,7 +1238,7 @@ dis.ASM
    1138
    1139	0663  56		     push si
    1140
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 21
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 21
 dis.ASM
 
 
@@ -1300,7 +1300,7 @@ dis.ASM
    1195	06D0  8A D8		     mov bl, al
    1196	06D2  80 E3 07		     and bl, 00000111b
    1197	06D5  80 FB 06		     cmp bl, 00000110b
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 22
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 22
 dis.ASM
 
 
@@ -1362,7 +1362,7 @@ dis.ASM
    1252	0735  75 08		     jne rmNot011
    1253	0737  B7 06		     mov bh, 6
    1254	0739  BE 0121r		     mov si, offset EAdress + 21
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 23
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 23
 dis.ASM
 
 
@@ -1424,7 +1424,7 @@ dis.ASM
    1309	078B  B9 0003		      mov cx, 3
    1310	078E  B4 40		      mov ah, 40h
    1311	0790  8B 1E 0158r	      mov bx, destFHandle
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 24
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 24
 dis.ASM
 
 
@@ -1486,7 +1486,7 @@ dis.ASM
    1366	07E8  E8 F9F8		     call printHexByte
    1367
    1368	07EB  C3		     ret
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 25
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 25
 dis.ASM
 
 
@@ -1548,7 +1548,7 @@ dis.ASM
    1423
    1424				     ;aprasysiu	tai pradzioj scan ciklo
    1425					     ;lea di, regBuffer
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 26
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 26
 dis.ASM
 
 
@@ -1576,7 +1576,7 @@ dis.ASM
    1446	0849			     fillRegBuffer ENDP
    1447
    1448				     end START
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 27
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 27
 Symbol Table
 
 
@@ -1586,7 +1586,7 @@ Symbol Name			  Type	 Value
 
 ??DATE				  Text	 "12/21/15"
 ??FILENAME			  Text	 "dis	  "
-??TIME				  Text	 "00:02:31"
+??TIME				  Text	 "00:07:50"
 ??VERSION			  Number 0314
 @32BIT				  Text	 0
 @CODE				  Text	 _TEXT
@@ -1638,7 +1638,7 @@ INCLINENUMBER			  Near	 _TEXT:019C
 INC_LINECOUNT			  Near	 _TEXT:00BF
 INTEGERTOHEXFROMMAP		  Near	 _TEXT:012F
 IN_AX				  Near	 _TEXT:02CC
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 28
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 28
 Symbol Table
 
 
@@ -1700,7 +1700,7 @@ REGBUFFER			  Byte	 DGROUP:01BE
 REGBUFFERCOUNT			  Byte	 DGROUP:0222
 RMNOT000			  Near	 _TEXT:0709
 RMNOT001			  Near	 _TEXT:071B
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 29
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 29
 Symbol Table
 
 
@@ -1759,7 +1759,7 @@ XCHGNOTDX			  Near	 _TEXT:033F
 XCHGPRINT			  Near	 _TEXT:0345
 _6				  Near	 _TEXT:0049
 _END				  Near	 _TEXT:00DE
-Turbo Assembler	 Version 3.2	    12/21/15 00:02:31	    Page 30
+Turbo Assembler	 Version 3.2	    12/21/15 00:07:50	    Page 30
 Symbol Table
 
 

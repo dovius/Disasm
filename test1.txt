@@ -1,0 +1,95 @@
+;1111 011w mod 000 r/m [poslinkis] bojb [bovb] – TEST registras/atmintis ? betarpiškas operandas
+;1010 100w bojb [bovb] – TEST akumuliatorius ? betarpiškas operandas 
+
+;TEST1*********************
+cmp bl, 10101000b
+jne not_test1
+call com_test1
+jmp com_recognized
+not_test1:
+
+; ------------------------------ TEST1
+proc com_test1
+cmp al, 10101000b
+jne test1w0
+jmp test1w1
+test1w0:
+
+call printHexByte
+cmp cx, 1
+jne skipRefilltest1w0
+call readToBuff
+skipRefilltest1w0:
+lodsb
+push ax
+dec cx
+call printHexByte
+call incLineNumber
+call printDoubleTab
+push cx
+mov cx, 4
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset com_names + 30
+int 21h
+pop cx
+
+call printDoubleTab
+
+push cx
+mov cx, 4
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset reg
+int 21h
+pop cx
+
+
+pop ax
+call printHexByte
+call printHNewline
+jmp inc_lineCount
+ret
+
+test1w1:
+call printHexByte
+cmp cx, 1
+jne skipRefilltest1w1
+call readToBuff
+skipRefilltest1w1:
+lodsb
+push ax
+dec cx
+call printHexByte
+call incLineNumber
+cmp cx, 1
+jne skipRefilltest1w12
+call readToBuff
+skipRefilltest1w12:
+pop ax
+mov bx, ax
+lodsb
+push bx
+push ax
+call printHexByte
+call incLineNumber
+call printDoubleTab
+push cx
+mov cx, 4
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset com_names + 30
+int 21h
+pop cx
+call printDoubleTab
+pop ax
+pop bx
+xchg ax, bx
+push bx
+call printHexByte
+pop bx
+mov ax, bx
+call printHexByte
+call printHNewline
+jmp inc_lineCount
+ret

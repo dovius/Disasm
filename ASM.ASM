@@ -838,8 +838,7 @@
 0446:  17		Neatpazinta komanda
 0447:  01		Neatpazinta komanda
 0448:  84		Neatpazinta komanda
-0449:  C4		Neatpazinta komanda
-044A:  A8		Neatpazinta komanda
+0449:  C4A8
 044B:  04		Neatpazinta komanda
 044C:  2E		Neatpazinta komanda
 044D:  84		Neatpazinta komanda
@@ -852,18 +851,15 @@
 0454:  17		Neatpazinta komanda
 0455:  01		Neatpazinta komanda
 0456:  86		Neatpazinta komanda
-0457:  C4		Neatpazinta komanda
-0458:  93		XCHG		bx, ax
+0457:  C493
 0459:  2E		Neatpazinta komanda
-045A:  C4		Neatpazinta komanda
-045B:  3E		Neatpazinta komanda
-045C:  34		Neatpazinta komanda
-045D:  01		Neatpazinta komanda
+045A:  C43E0134    
+
+
 045E:  2E		Neatpazinta komanda
-045F:  C4		Neatpazinta komanda
-0460:  3E		Neatpazinta komanda
-0461:  38		Neatpazinta komanda
-0462:  01		Neatpazinta komanda
+045F:  C43E0138        
+
+
 0463:  BA		Neatpazinta komanda
 0464:  00		Neatpazinta komanda
 0465:  00		Neatpazinta komanda

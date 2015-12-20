@@ -74,10 +74,11 @@ mod11w1reg	db 'ax$';0
 			db 'cx$';3
 			db 'dx$';6
 			db 'bx$';9
-			db 'bp$';12
-			db 'sp$';15
+			db 'sp$';12
+			db 'bp$';15
 			db 'si$';18
 			db 'di$';21
+			db ', $';24
 EAdress		db '[bx+si$' ;0
 			db '[bx+di$' ;7
 			db '[bp+si$' ;14
@@ -98,6 +99,14 @@ destF   	db 'asm.asm'
 destFHandle 	dw ?
 
 buffer    db 100 dup (?)
+regBuffer db 100 dup (?)
+regBufferCount db 0
+
+; poslinkio bitai
+dLow	db 0
+dHigh db 0
+
+temp db 'abc'
 
 .code
 
@@ -159,6 +168,8 @@ mov	bx, destFHandle		; rasoma i cia
 atrenka:
 lodsb  				; Load byte at address DS:(E)SI into AL
 
+
+lea di, regBuffer
 call printLineNumber
 
 ;in portas****************************
@@ -211,8 +222,8 @@ not_int:
 ; LES*******************************
 cmp al, 11000100b
 jne not_les
-;call com_les
-jmp not_les
+call com_les
+;jmp not_les
 jmp com_recognized
 not_les:
 
@@ -318,6 +329,7 @@ read_filename ENDP
 
 IntegerToHexFromMap PROC
 		push si
+		push di
 
     mov si, OFFSET Hex_Map          ; Pointer to hex-character table
 
@@ -333,6 +345,7 @@ IntegerToHexFromMap PROC
     mov dl, [si+bx]                 ; Read hex-character from the table
     mov [di+1], dl                  ; Store character at the second place in the output string
 
+		pop di
 		pop si
     ret
 IntegerToHexFromMap ENDP
@@ -342,6 +355,7 @@ printLineNumber PROC
   push cx
   push si
 	push ax
+	push di
 
   mov di, OFFSET HEX_Out          ; First argument: pointer
   mov ax, lineCountH               ; Second argument: Integer
@@ -369,6 +383,7 @@ printLineNumber PROC
   lea dx, lineStringAdd
   int 21h
 
+	pop di
 	pop ax
   pop si
   pop cx
@@ -390,6 +405,7 @@ incLineNumber ENDP
 
 
 com_unk PROC
+push di
 call printHexByte
 push cx
 push ax
@@ -402,6 +418,7 @@ push ax
 
  pop ax
  pop cx
+ pop di
  ret
 com_unk ENDP
 
@@ -420,6 +437,8 @@ readToBuff ENDP
 printHexByte PROC
 push cx
 push ax
+push di
+push bx
 
 mov di, OFFSET HEX_Out
 call IntegerToHexFromMap
@@ -429,6 +448,8 @@ mov bx, destFHandle
 lea dx, HEX_Out
 int 21h
 
+pop bx
+pop di
 pop ax
 pop cx
 ret
@@ -666,24 +687,238 @@ jne skipRefillLes
 call readToBuff
 skipRefillLes:
 lodsb
-push ax
 dec cx
+
 call printHexByte
 call incLineNumber
-pop ax
+
+
+mov bl, al
+and bl, 11000000b
+cmp bl, 00000000b
+jne LESmodnot00
+
+;nuskaitome reg, cia kai w=1
+call scanREG
+call scanRM
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000110b
+jne rmNot110
+
+
+; skaitom poslinkio LowByte
+cmp cx, 1
+jne skipRefillLes2
+call readToBuff
+skipRefillLes2:
+lodsb
+mov [dLow], al
+dec cx
+call incLineNumber
+
+;Skaitom poslinkio HighByte
+cmp cx, 1
+jne skipRefillLes3
+call readToBuff
+skipRefillLes3:
+lodsb
+mov [dHigh], al
+dec cx
+call incLineNumber
+
+
+call printHexByte
+mov al, [dLow]
+call printHexByte
+
+call printDIstring
+
+
+
+call printNewline
+call printNewline
+
+rmNot110:
+
+
+
+LESmodnot00:
+call printNewline
+
 ret
 com_les ENDP
+
+
+scanREG PROC
+push si
+
+mov bl, al
+and bl, 00111000b
+cmp bl, 00111000b
+jne LESregnot111
+mov bh, 2 ; nusakom kiek simboliu
+mov si, offset mod11w1reg + 21 ; di bus nukreipta i bufferReg
+call fillRegBuffer
+LESregnot111:
+
+mov bl, al
+and bl, 00111000b
+cmp bl, 00110000b
+jne LESregnot110
+mov bh, 2
+mov si, offset mod11w1reg + 18
+call fillRegBuffer
+LESregnot110:
+
+mov bl, al
+and bl, 00111000b
+cmp bl, 00101000b
+jne LESregnot101
+mov bh, 2
+mov si, offset mod11w1reg + 15
+call fillRegBuffer
+LESregnot101:
+
+mov bl, al
+and bl, 00111000b
+cmp bl, 00100000b
+jne LESregnot100
+mov bh, 2
+mov si, offset mod11w1reg + 12
+call fillRegBuffer
+LESregnot100:
+
+mov bl, al
+and bl, 00111000b
+cmp bl, 00011000b
+jne LESregnot011
+mov bh, 2
+mov si, offset mod11w1reg + 9
+call fillRegBuffer
+LESregnot011:
+
+mov bl, al
+and bl, 00111000b
+cmp bl, 00010000b
+jne LESregnot010
+mov bh, 2
+mov si, offset mod11w1reg + 6
+call fillRegBuffer
+LESregnot010:
+
+mov bl, al
+and bl, 00111000b
+cmp bl, 00001000b
+jne LESregnot001
+mov bh, 2
+mov si, offset mod11w1reg + 3
+call fillRegBuffer
+LESregnot001:
+
+mov bl, al
+and bl, 00111000b
+cmp bl, 00000000b
+jne LESregnot000
+mov bh, 2
+mov si, offset mod11w1reg + 0
+call fillRegBuffer
+LESregnot000:
+
+mov bh, 2
+mov si, offset mod11w1reg + 24
+call fillRegBuffer
+
+pop si
+ret
+scanREG ENDP
+
+; cia be 110 rm, nes ten keicias logika nuo mod
+scanRM PROC
+
+push si
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000000b
+jne rmNot000
+mov bh, 6
+mov si, offset EAdress + 0
+call fillRegBuffer
+rmNot000:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000001b
+jne rmNot001
+mov bh, 6
+mov si, offset EAdress + 7
+call fillRegBuffer
+rmNot001:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000010b
+jne rmNot010
+mov bh, 6
+mov si, offset EAdress + 14
+call fillRegBuffer
+rmNot010:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000011b
+jne rmNot011
+mov bh, 6
+mov si, offset EAdress + 21
+call fillRegBuffer
+rmNot011:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000100b
+jne rmNot100
+mov bh, 6
+mov si, offset EAdress + 28
+call fillRegBuffer
+rmNot100:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000101b
+jne rmNot101
+mov bh, 6
+mov si, offset EAdress + 35
+call fillRegBuffer
+rmNot101:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000111b
+jne rmNot111
+mov bh, 6
+mov si, offset EAdress + 49
+call fillRegBuffer
+rmNot111:
+
+pop si
+ret
+scanRM ENDP
 
 ;---------
 
 ;formatavimo proceduros
 printDoubleTab PROC
  push cx
+ push ax
+
  mov cx, 2
  mov ah, 40h
  mov bx, destFHandle
  lea dx, line_doubleTab
  int 21h
+
+ pop ax
  pop cx
  ret
 printDoubleTab ENDP
@@ -710,6 +945,20 @@ printNewline PROC
  ret
 printNewline ENDP
 
+printDIstring PROC
+ push cx
+ mov ch, 0
+ mov cl, [regBufferCount]
+
+ mov ah, 40h
+ mov bx, destFHandle
+ mov dx, di
+ int 21h
+
+ pop cx
+ ret
+printDIstring ENDP
+
 printOperandSeparator PROC
  push cx
  mov cx, 2
@@ -721,5 +970,30 @@ printOperandSeparator PROC
  ret
 printOperandSeparator ENDP
 
+fillRegBuffer PROC
+
+;aprasysiu tai pradzioj scan ciklo
+	;lea di, regBuffer
+	push cx
+	push si
+
+	mov ch, 0
+	mov cl, bh
+
+	pushToBuffer2:
+	push bx
+	mov bl, [si]
+	mov [di], bl
+	pop bx
+	inc si
+	inc di
+	inc [regBufferCount]
+	loop pushToBuffer2
+
+	pop si
+	pop cx
+
+	ret
+fillRegBuffer ENDP
 
 end START

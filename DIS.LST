@@ -1,4 +1,4 @@
-Turbo Assembler	 Version 3.2	    12/19/15 15:17:59	    Page 1
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 1
 dis.ASM
 
 
@@ -60,7 +60,7 @@ dis.ASM
      55
      56
      57				     ;formatavimas
-Turbo Assembler	 Version 3.2	    12/19/15 15:17:59	    Page 2
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 2
 dis.ASM
 
 
@@ -103,719 +103,1013 @@ dis.ASM
      93	00F4  63 78 24					     db	'cx$';3
      94	00F7  64 78 24					     db	'dx$';6
      95	00FA  62 78 24					     db	'bx$';9
-     96	00FD  62 70 24					     db	'bp$';12
-     97	0100  73 70 24					     db	'sp$';15
+     96	00FD  73 70 24					     db	'sp$';12
+     97	0100  62 70 24					     db	'bp$';15
      98	0103  73 69 24					     db	'si$';18
      99	0106  64 69 24					     db	'di$';21
-    100	0109  5B 62 78 2B 73 69	24   EAdress	     db	'[bx+si$' ;0
-    101	0110  5B 62 78 2B 64 69	24			     db	'[bx+di$' ;7
-    102	0117  5B 62 70 2B 73 69	24			     db	'[bp+si$' ;14
-    103	011E  5B 62 70 2B 64 69	24			     db	'[bp+di$' ;21
-    104	0125  5B 73 69 20 20 20	24			     db	'[si   $' ;28
-    105	012C  5B 64 69 20 20 20	24			     db	'[di   $' ;35
-    106	0133  5B 62 70 20 20 20	24			     db	'[bp   $' ;42
-    107	013A  5B 62 78 20 20 20	24			     db	'[bx   $' ;49
-    108				     ;---------------------------------------
-    109
+    100	0109  2C 20 24					     db	', $';24
+    101	010C  5B 62 78 2B 73 69	24   EAdress	     db	'[bx+si$' ;0
+    102	0113  5B 62 78 2B 64 69	24			     db	'[bx+di$' ;7
+    103	011A  5B 62 70 2B 73 69	24			     db	'[bp+si$' ;14
+    104	0121  5B 62 70 2B 64 69	24			     db	'[bp+di$' ;21
+    105	0128  5B 73 69 20 20 20	24			     db	'[si   $' ;28
+    106	012F  5B 64 69 20 20 20	24			     db	'[di   $' ;35
+    107	0136  5B 62 70 20 20 20	24			     db	'[bp   $' ;42
+    108	013D  5B 62 78 20 20 20	24			     db	'[bx   $' ;49
+    109				     ;---------------------------------------
     110
     111
     112
-    113	0141  74 65 73 74 2E 65	78+  sourceF	     db	'test.exe'
-    114	      65
-Turbo Assembler	 Version 3.2	    12/19/15 15:17:59	    Page 3
+    113
+    114	0144  74 65 73 74 2E 65	78+  sourceF	     db	'test.exe'
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 3
 dis.ASM
 
 
 
-    115	0149  ????		     sourceFHandle   dw	?
-    116
-    117	014B  61 73 6D 2E 61 73	6D   destF	     db	'asm.asm'
-    118	0152  ????		     destFHandle     dw	?
-    119
-    120	0154  64*(??)		     buffer    db 100 dup (?)
-    121
-    122	01B8			     .code
-    123
-    124	0000			     START:
-    125	0000  B8 0000s		     mov     ax, @data
-    126	0003  8E C0		     mov     es, ax		     ; es kad galetume naudot stosb funkcija: Store AL at address   +
-    127				     ES:(E)DI
+    115	      65
+    116	014C  ????		     sourceFHandle   dw	?
+    117
+    118	014E  61 73 6D 2E 61 73	6D   destF	     db	'asm.asm'
+    119	0155  ????		     destFHandle     dw	?
+    120
+    121	0157  64*(??)		     buffer    db 100 dup (?)
+    122	01BB  64*(??)		     regBuffer db 100 dup (?)
+    123	021F  00		     regBufferCount db 0
+    124
+    125				     ; poslinkio bitai
+    126	0220  00		     dLow    db	0
+    127	0221  00		     dHigh db 0
     128
-    129	0005  BF 014Br		     lea     di, destF
-    130	0008  BF 0141r		     lea     di, sourceF
-    131
-    132	000B  1E		     push    ds
-    133	000C  56		     push    si
-    134
-    135	000D  B8 0000s		     mov     ax, @data
-    136	0010  8E D8		     mov     ds, ax
+    129	0222  61 62 63		     temp db 'abc'
+    130
+    131	0225			     .code
+    132
+    133	0000			     START:
+    134	0000  B8 0000s		     mov     ax, @data
+    135	0003  8E C0		     mov     es, ax		     ; es kad galetume naudot stosb funkcija: Store AL at address   +
+    136				     ES:(E)DI
     137
-    138				     ;;	rasymui
-    139	0012  BA 014Br		     mov     dx, offset	destF	     ; ikelti i	dx destF - failo pavadinima
-    140	0015  B4 3C		     mov     ah, 3ch		     ; isvalo/sukuria faila - komandos kodas
-    141	0017  B9 0000		     mov     cx, 0		     ; normal -	no attributes
-    142	001A  CD 21		     int     21h		     ; INT 21h / AH= 3Ch - create or truncate file.
+    138	0005  BF 014Er		     lea     di, destF
+    139	0008  BF 0144r		     lea     di, sourceF
+    140
+    141	000B  1E		     push    ds
+    142	000C  56		     push    si
     143
-    144
-    145	001C  B4 3D		     mov     ah, 3dh		     ; atidaro faila - komandos	kodas
-    146	001E  B0 01		     mov     al, 1		     ; rasymui
-    147	0020  CD 21		     int     21h		     ; INT 21h / AH= 3Dh - open	existing file.
-    148
-    149	0022  A3 0152r		     mov     destFHandle, ax	     ; issaugom	handle
-    150
-    151	0025  EB 01 90		     jmp     startConverting
+    144	000D  B8 0000s		     mov     ax, @data
+    145	0010  8E D8		     mov     ds, ax
+    146
+    147				     ;;	rasymui
+    148	0012  BA 014Er		     mov     dx, offset	destF	     ; ikelti i	dx destF - failo pavadinima
+    149	0015  B4 3C		     mov     ah, 3ch		     ; isvalo/sukuria faila - komandos kodas
+    150	0017  B9 0000		     mov     cx, 0		     ; normal -	no attributes
+    151	001A  CD 21		     int     21h		     ; INT 21h / AH= 3Ch - create or truncate file.
     152
     153
-    154	0028			     startConverting:
-    155	0028  BA 0141r		     mov     dx, offset	sourceF	     ; failo pavadinimas
-    156	002B  B4 3D		     mov     ah, 3dh		     ; atidaro faila - komandos	kodas
-    157	002D  B0 00		     mov     al, 0		     ; 0 - reading, 1-writing, 2-abu
-    158	002F  CD 21		     int     21h				 ; INT 21h / AH= 3Dh - open existing file
-    159	0031  73 03		     jnc     not_err_source		   ; CF	set on error AX	= error	code.
-    160	0033  E9 0099		     jmp err_source
-    161	0036			     not_err_source:
-    162	0036  A3 0149r		     mov     sourceFHandle, ax	       ; issaugojam filehandle
-    163
-    164	0039			     skaitom:
-    165
-    166	0039  E8 0179		     call readToBuff
-    167
-    168	003C  75 0B		     jne     _6			     ; tai ne pabaiga
-    169
-    170	003E  8B 1E 0149r	     mov     bx, sourceFHandle	     ; pabaiga skaitomo	failo
-    171	0042  B4 3E		     mov     ah, 3eh		     ; uzdaryti
-Turbo Assembler	 Version 3.2	    12/19/15 15:17:59	    Page 4
+    154	001C  B4 3D		     mov     ah, 3dh		     ; atidaro faila - komandos	kodas
+    155	001E  B0 01		     mov     al, 1		     ; rasymui
+    156	0020  CD 21		     int     21h		     ; INT 21h / AH= 3Dh - open	existing file.
+    157
+    158	0022  A3 0155r		     mov     destFHandle, ax	     ; issaugom	handle
+    159
+    160	0025  EB 01 90		     jmp     startConverting
+    161
+    162
+    163	0028			     startConverting:
+    164	0028  BA 0144r		     mov     dx, offset	sourceF	     ; failo pavadinimas
+    165	002B  B4 3D		     mov     ah, 3dh		     ; atidaro faila - komandos	kodas
+    166	002D  B0 00		     mov     al, 0		     ; 0 - reading, 1-writing, 2-abu
+    167	002F  CD 21		     int     21h				 ; INT 21h / AH= 3Dh - open existing file
+    168	0031  73 03		     jnc     not_err_source		   ; CF	set on error AX	= error	code.
+    169	0033  E9 009C		     jmp err_source
+    170	0036			     not_err_source:
+    171	0036  A3 014Cr		     mov     sourceFHandle, ax	       ; issaugojam filehandle
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 4
 dis.ASM
 
 
 
-    172	0044  CD 21		     int     21h
-    173	0046  EB 7A 90		     jmp closeF
+    172
+    173	0039			     skaitom:
     174
-    175	0049			     _6:
-    176	0049  BE 0154r		     mov     si, offset	buffer	     ; skaitoma	is cia
-    177	004C  8B 1E 0152r	     mov     bx, destFHandle	     ; rasoma i	cia
+    175	0039  E8 0182		     call readToBuff
+    176
+    177	003C  75 0B		     jne     _6			     ; tai ne pabaiga
     178
-    179				     ; cia prasideda pagrindine	logika (apdoroja kiekviena baita)
-    180	0050			     atrenka:
-    181	0050  AC		     lodsb			     ; Load byte at address DS:(E)SI into AL
-    182
-    183	0051  E8 00ED		     call printLineNumber
-    184
-    185				     ;in portas****************************
-    186	0054  8A D8		     mov bl, al
-    187	0056  80 E3 FE		     and bl, 11111110b
-    188	0059  80 FB E4		     cmp bl, 11100100b
-    189	005C  75 06		     jne not_in2
-    190	005E  E8 0181		     call com_in2
-    191	0061  EB 49 90		     jmp com_recognized
-    192	0064			     not_in2:
-    193
-    194				     ;in be porto**************************
-    195	0064  8A D8		     mov bl, al
-    196	0066  80 FB EC		     cmp bl, 11101100b
-    197	0069  75 06		     jne not_in
-    198	006B  E8 0232		     call com_in
-    199	006E  EB 3C 90		     jmp com_recognized
-    200	0071			     not_in:
-    201
-    202				     ;XCHG********************************
-    203	0071  8A D8		     mov bl, al
-    204	0073  80 E3 F8		     and bl, 11111000b
-    205	0076  80 FB 90		     cmp bl, 10010000b
-    206	0079  75 06		     jne not_xchg
-    207	007B  E8 0275		     call com_xchg
-    208	007E  EB 2C 90		     jmp com_recognized
-    209	0081			     not_xchg:
-    210
-    211				     ;IRET********************************
-    212	0081  3C CF		     cmp al, 11001111b
-    213	0083  75 06		     jne not_iret
-    214	0085  E8 01D6		     call com_iret
-    215	0088  EB 22 90		     jmp com_recognized
-    216	008B			     not_iret:
-    217
-    218				     ;INT su kodu************************
-    219	008B  3C CD		     cmp al, 11001101b
-    220	008D  75 06		     jne not_int2
-    221	008F  E8 0197		     call com_int2
-    222	0092  EB 18 90		     jmp com_recognized
-    223	0095			     not_int2:
-    224
-    225				     ; INT 3*****************************
-    226	0095  3C CC		     cmp al, 11001100b
-    227	0097  75 06		     jne not_int
-    228	0099  E8 01DF		     call com_int
-Turbo Assembler	 Version 3.2	    12/19/15 15:17:59	    Page 5
+    179	003E  8B 1E 014Cr	     mov     bx, sourceFHandle	     ; pabaiga skaitomo	failo
+    180	0042  B4 3E		     mov     ah, 3eh		     ; uzdaryti
+    181	0044  CD 21		     int     21h
+    182	0046  EB 7D 90		     jmp closeF
+    183
+    184	0049			     _6:
+    185	0049  BE 0157r		     mov     si, offset	buffer	     ; skaitoma	is cia
+    186	004C  8B 1E 0155r	     mov     bx, destFHandle	     ; rasoma i	cia
+    187
+    188				     ; cia prasideda pagrindine	logika (apdoroja kiekviena baita)
+    189	0050			     atrenka:
+    190	0050  AC		     lodsb			     ; Load byte at address DS:(E)SI into AL
+    191
+    192
+    193	0051  BF 01BBr		     lea di, regBuffer
+    194	0054  E8 00EF		     call printLineNumber
+    195
+    196				     ;in portas****************************
+    197	0057  8A D8		     mov bl, al
+    198	0059  80 E3 FE		     and bl, 11111110b
+    199	005C  80 FB E4		     cmp bl, 11100100b
+    200	005F  75 06		     jne not_in2
+    201	0061  E8 018B		     call com_in2
+    202	0064  EB 49 90		     jmp com_recognized
+    203	0067			     not_in2:
+    204
+    205				     ;in be porto**************************
+    206	0067  8A D8		     mov bl, al
+    207	0069  80 FB EC		     cmp bl, 11101100b
+    208	006C  75 06		     jne not_in
+    209	006E  E8 023C		     call com_in
+    210	0071  EB 3C 90		     jmp com_recognized
+    211	0074			     not_in:
+    212
+    213				     ;XCHG********************************
+    214	0074  8A D8		     mov bl, al
+    215	0076  80 E3 F8		     and bl, 11111000b
+    216	0079  80 FB 90		     cmp bl, 10010000b
+    217	007C  75 06		     jne not_xchg
+    218	007E  E8 027F		     call com_xchg
+    219	0081  EB 2C 90		     jmp com_recognized
+    220	0084			     not_xchg:
+    221
+    222				     ;IRET********************************
+    223	0084  3C CF		     cmp al, 11001111b
+    224	0086  75 06		     jne not_iret
+    225	0088  E8 01E0		     call com_iret
+    226	008B  EB 22 90		     jmp com_recognized
+    227	008E			     not_iret:
+    228
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 5
 dis.ASM
 
 
 
-    229	009C  EB 0E 90		     jmp com_recognized
-    230	009F			     not_int:
-    231
-    232				     ; LES*******************************
-    233	009F  3C C4		     cmp al, 11000100b
-    234	00A1  75 06		     jne not_les
-    235				     ;call com_les
-    236	00A3  EB 04 90		     jmp not_les
-    237	00A6  EB 04 90		     jmp com_recognized
-    238	00A9			     not_les:
-    239
-    240				     ; Nezinoma	komanda******************
-    241	00A9  E8 00F3		     call com_unk
+    229				     ;INT su kodu************************
+    230	008E  3C CD		     cmp al, 11001101b
+    231	0090  75 06		     jne not_int2
+    232	0092  E8 01A1		     call com_int2
+    233	0095  EB 18 90		     jmp com_recognized
+    234	0098			     not_int2:
+    235
+    236				     ; INT 3*****************************
+    237	0098  3C CC		     cmp al, 11001100b
+    238	009A  75 06		     jne not_int
+    239	009C  E8 01E9		     call com_int
+    240	009F  EB 0E 90		     jmp com_recognized
+    241	00A2			     not_int:
     242
-    243	00AC			     com_recognized:
-    244
-    245	00AC			     inc_lineCount:
-    246	00AC  E8 00D5		     call incLineNumber
-    247
-    248	00AF  E2 9F		     loop    atrenka
-    249	00B1  EB 86		     jmp skaitom
+    243				     ; LES*******************************
+    244	00A2  3C C4		     cmp al, 11000100b
+    245	00A4  75 06		     jne not_les
+    246	00A6  E8 02C7		     call com_les
+    247				     ;jmp not_les
+    248	00A9  EB 04 90		     jmp com_recognized
+    249	00AC			     not_les:
     250
-    251
-    252
+    251				     ; Nezinoma	komanda******************
+    252	00AC  E8 00F7		     call com_unk
     253
-    254				     ;----------------------------------
-    255	00B3			     help:
-    256	00B3  B8 0000s		     mov     ax, @data
-    257	00B6  8E D8		     mov     ds, ax
+    254	00AF			     com_recognized:
+    255
+    256	00AF			     inc_lineCount:
+    257	00AF  E8 00D9		     call incLineNumber
     258
-    259	00B8  BA 0000r		     mov     dx, offset	apie
-    260	00BB  B4 09		     mov     ah, 09h
-    261	00BD  CD 21		     int     21h
+    259	00B2  E2 9C		     loop    atrenka
+    260	00B4  EB 83		     jmp skaitom
+    261
     262
-    263	00BF  EB 09 90		     jmp     _end
+    263
     264
-    265	00C2			     closeF:
-    266				     ;;	uzdaryti dest
-    267	00C2  B4 3E		     mov     ah, 3eh		     ; uzdaryti
-    268	00C4  8B 1E 0152r	     mov     bx, destFHandle
-    269	00C8  CD 21		     int     21h
-    270
-    271	00CA			     _end:
-    272	00CA  B8 4C00		     mov     ax, 4c00h
-    273	00CD  CD 21		     int     21h
-    274
-    275	00CF			     err_source:
-    276	00CF  B8 0000s		     mov     ax, @data
-    277	00D2  8E D8		     mov     ds, ax
-    278
-    279	00D4  BA 0041r		     mov     dx, offset	err_s
-    280	00D7  B4 09		     mov     ah, 09h
-    281	00D9  CD 21		     int     21h
-    282
-    283	00DB  BA 0141r		     mov     dx, offset	sourceF
-    284	00DE  CD 21		     int     21h
+    265				     ;----------------------------------
+    266	00B6			     help:
+    267	00B6  B8 0000s		     mov     ax, @data
+    268	00B9  8E D8		     mov     ds, ax
+    269
+    270	00BB  BA 0000r		     mov     dx, offset	apie
+    271	00BE  B4 09		     mov     ah, 09h
+    272	00C0  CD 21		     int     21h
+    273
+    274	00C2  EB 09 90		     jmp     _end
+    275
+    276	00C5			     closeF:
+    277				     ;;	uzdaryti dest
+    278	00C5  B4 3E		     mov     ah, 3eh		     ; uzdaryti
+    279	00C7  8B 1E 0155r	     mov     bx, destFHandle
+    280	00CB  CD 21		     int     21h
+    281
+    282	00CD			     _end:
+    283	00CD  B8 4C00		     mov     ax, 4c00h
+    284	00D0  CD 21		     int     21h
     285
-Turbo Assembler	 Version 3.2	    12/19/15 15:17:59	    Page 6
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 6
 dis.ASM
 
 
 
-    286	00E0  B8 4C01		     mov     ax, 4c01h
-    287	00E3  CD 21		     int     21h
-    288
-    289	00E5			     err_destination:
-    290	00E5  B8 0000s		     mov     ax, @data
-    291	00E8  8E D8		     mov     ds, ax
-    292
-    293	00EA  BA 0012r		     mov     dx, offset	err_d
-    294	00ED  B4 09		     mov     ah, 09h
-    295	00EF  CD 21		     int     21h
+    286	00D2			     err_source:
+    287	00D2  B8 0000s		     mov     ax, @data
+    288	00D5  8E D8		     mov     ds, ax
+    289
+    290	00D7  BA 0041r		     mov     dx, offset	err_s
+    291	00DA  B4 09		     mov     ah, 09h
+    292	00DC  CD 21		     int     21h
+    293
+    294	00DE  BA 0144r		     mov     dx, offset	sourceF
+    295	00E1  CD 21		     int     21h
     296
-    297	00F1  BA 014Br		     mov     dx, offset	destF
-    298	00F4  CD 21		     int     21h
+    297	00E3  B8 4C01		     mov     ax, 4c01h
+    298	00E6  CD 21		     int     21h
     299
-    300	00F6  B8 4C02		     mov     ax, 4c02h
-    301	00F9  CD 21		     int     21h
-    302
+    300	00E8			     err_destination:
+    301	00E8  B8 0000s		     mov     ax, @data
+    302	00EB  8E D8		     mov     ds, ax
     303
-    304				     ;;	procedures
-    305
-    306	00FB			     skip_spaces PROC near
+    304	00ED  BA 0012r		     mov     dx, offset	err_d
+    305	00F0  B4 09		     mov     ah, 09h
+    306	00F2  CD 21		     int     21h
     307
-    308	00FB			     skip_spaces_loop:
-    309	00FB  80 3C 20		     cmp byte ptr ds:[si], ' '
-    310	00FE  75 03		     jne skip_spaces_end
-    311	0100  46		     inc si
-    312	0101  EB F8		     jmp skip_spaces_loop
-    313	0103			     skip_spaces_end:
-    314	0103  C3		     ret
-    315
-    316	0104			     skip_spaces ENDP
-    317
-    318	0104			     read_filename PROC	near
-    319
-    320	0104  50		     push    ax
-    321	0105  E8 FFF3		     call    skip_spaces
-    322	0108			     read_filename_start:
-    323	0108  80 3C 0D		     cmp     byte ptr ds:[si], 13    ; jei nera	parametru
-    324	010B  74 05		     je	     read_filename_end	     ; tai taip, tai baigtas failo vedimas
-    325	010D  80 3C 20		     cmp     byte ptr ds:[si], ' '   ; jei tarpas
-    326	0110  75 05		     jne     read_filename_next	     ; tai praleisti visus tarpus, ir sokti prie kito parametro
-    327	0112			     read_filename_end:
-    328	0112  B0 24		     mov     al, '$'		     ; irasyti '$' gale
-    329	0114  AA		     stosb			     ; Store AL	at address ES:(E)DI, di	= di + 1
-    330	0115  58		     pop     ax
-    331	0116  C3		     ret
-    332	0117			     read_filename_next:
-    333	0117  AC		     lodsb			     ; uzkrauna	kita simboli
-    334	0118  AA		     stosb			     ; Store AL	at address ES:(E)DI, di	= di + 1
-    335	0119  EB ED		     jmp read_filename_start
-    336
-    337	011B			     read_filename ENDP
-    338
-    339
-    340	011B			     IntegerToHexFromMap PROC
-    341	011B  56				     push si
-    342
-Turbo Assembler	 Version 3.2	    12/19/15 15:17:59	    Page 7
+    308	00F4  BA 014Er		     mov     dx, offset	destF
+    309	00F7  CD 21		     int     21h
+    310
+    311	00F9  B8 4C02		     mov     ax, 4c02h
+    312	00FC  CD 21		     int     21h
+    313
+    314
+    315				     ;;	procedures
+    316
+    317	00FE			     skip_spaces PROC near
+    318
+    319	00FE			     skip_spaces_loop:
+    320	00FE  80 3C 20		     cmp byte ptr ds:[si], ' '
+    321	0101  75 03		     jne skip_spaces_end
+    322	0103  46		     inc si
+    323	0104  EB F8		     jmp skip_spaces_loop
+    324	0106			     skip_spaces_end:
+    325	0106  C3		     ret
+    326
+    327	0107			     skip_spaces ENDP
+    328
+    329	0107			     read_filename PROC	near
+    330
+    331	0107  50		     push    ax
+    332	0108  E8 FFF3		     call    skip_spaces
+    333	010B			     read_filename_start:
+    334	010B  80 3C 0D		     cmp     byte ptr ds:[si], 13    ; jei nera	parametru
+    335	010E  74 05		     je	     read_filename_end	     ; tai taip, tai baigtas failo vedimas
+    336	0110  80 3C 20		     cmp     byte ptr ds:[si], ' '   ; jei tarpas
+    337	0113  75 05		     jne     read_filename_next	     ; tai praleisti visus tarpus, ir sokti prie kito parametro
+    338	0115			     read_filename_end:
+    339	0115  B0 24		     mov     al, '$'		     ; irasyti '$' gale
+    340	0117  AA		     stosb			     ; Store AL	at address ES:(E)DI, di	= di + 1
+    341	0118  58		     pop     ax
+    342	0119  C3		     ret
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 7
 dis.ASM
 
 
 
-    343	011C  BE 0071r			 mov si, OFFSET	Hex_Map		 ; Pointer to hex-character table
-    344
-    345	011F  8B D8			 mov bx, ax			 ; BX =	argument AX
-    346	0121  81 E3 00FF		 and bx, 00FFh			 ; Clear BH (just to be	on the safe side)
-    347	0125  D1 EB D1 EB D1 EB	D1+	 shr bx, 4			 ; Isolate high	nibble (i.e. 4 bits)
-    348	      EB
-    349	012D  8A 10			 mov dl, [si+bx]		 ; Read	hex-character from the table
-    350	012F  88 15			 mov [di+0], dl			 ; Store character at the first	place in the output string
-    351
-    352	0131  8B D8			 mov bx, ax			 ; BX =	argument AX (just to be	on the safe side)
-    353	0133  81 E3 00FF		 and bx, 00FFh			 ; Clear BH (just to be	on the safe side)
-    354	0137  80 E3 0F			 and bl, 0Fh			 ; Isolate low nibble (i.e. 4 bits)
-    355	013A  8A 10			 mov dl, [si+bx]		 ; Read	hex-character from the table
-    356	013C  88 55 01			 mov [di+1], dl			 ; Store character at the second place in the output string
-    357
-    358	013F  5E				     pop si
-    359	0140  C3			 ret
-    360	0141			     IntegerToHexFromMap ENDP
-    361
-    362	0141			     printLineNumber PROC
+    343	011A			     read_filename_next:
+    344	011A  AC		     lodsb			     ; uzkrauna	kita simboli
+    345	011B  AA		     stosb			     ; Store AL	at address ES:(E)DI, di	= di + 1
+    346	011C  EB ED		     jmp read_filename_start
+    347
+    348	011E			     read_filename ENDP
+    349
+    350
+    351	011E			     IntegerToHexFromMap PROC
+    352	011E  56				     push si
+    353	011F  57				     push di
+    354
+    355	0120  BE 0071r			 mov si, OFFSET	Hex_Map		 ; Pointer to hex-character table
+    356
+    357	0123  8B D8			 mov bx, ax			 ; BX =	argument AX
+    358	0125  81 E3 00FF		 and bx, 00FFh			 ; Clear BH (just to be	on the safe side)
+    359	0129  D1 EB D1 EB D1 EB	D1+	 shr bx, 4			 ; Isolate high	nibble (i.e. 4 bits)
+    360	      EB
+    361	0131  8A 10			 mov dl, [si+bx]		 ; Read	hex-character from the table
+    362	0133  88 15			 mov [di+0], dl			 ; Store character at the first	place in the output string
     363
-    364	0141  51		       push cx
-    365	0142  56		       push si
-    366	0143  50			     push ax
-    367
-    368	0144  BF 0081r		       mov di, OFFSET HEX_Out	       ; First argument: pointer
-    369	0147  A1 006Fr		       mov ax, lineCountH		; Second argument: Integer
-    370	014A  E8 FFCE		       call IntegerToHexFromMap
-    371
-    372	014D  B9 0002		       mov cx, 2
-    373	0150  B4 40		       mov   ah, 40h
-    374	0152  8B 1E 0152r	       mov bx, destFHandle
-    375	0156  BA 0081r		       lea dx, HEX_Out
-    376	0159  CD 21		       int 21h
-    377
-    378	015B  BF 0081r		       mov di, OFFSET HEX_Out	       ; First argument: pointer
-    379	015E  A1 006Dr		       mov ax, lineCount	       ; Second	argument: Integer
-    380	0161  E8 FFB7		       call IntegerToHexFromMap
+    364	0135  8B D8			 mov bx, ax			 ; BX =	argument AX (just to be	on the safe side)
+    365	0137  81 E3 00FF		 and bx, 00FFh			 ; Clear BH (just to be	on the safe side)
+    366	013B  80 E3 0F			 and bl, 0Fh			 ; Isolate low nibble (i.e. 4 bits)
+    367	013E  8A 10			 mov dl, [si+bx]		 ; Read	hex-character from the table
+    368	0140  88 55 01			 mov [di+1], dl			 ; Store character at the second place in the output string
+    369
+    370	0143  5F				     pop di
+    371	0144  5E				     pop si
+    372	0145  C3			 ret
+    373	0146			     IntegerToHexFromMap ENDP
+    374
+    375	0146			     printLineNumber PROC
+    376
+    377	0146  51		       push cx
+    378	0147  56		       push si
+    379	0148  50			     push ax
+    380	0149  57			     push di
     381
-    382	0164  B9 0002		       mov cx, 2
-    383	0167  B4 40		       mov   ah, 40h
-    384	0169  8B 1E 0152r	       mov bx, destFHandle
-    385	016D  BA 0081r		       lea dx, HEX_Out
-    386	0170  CD 21		       int 21h
-    387
-    388	0172  B9 0003		       mov cx, 3
-    389	0175  B4 40		       mov ah, 40h
-    390	0177  8B 1E 0152r	       mov bx, destFHandle
-    391	017B  BA 0086r		       lea dx, lineStringAdd
-    392	017E  CD 21		       int 21h
-    393
-    394	0180  58			     pop ax
-    395	0181  5E		       pop si
-    396	0182  59		       pop cx
-    397	0183  C3		       ret
-    398	0184			     printLineNumber ENDP
-    399
-Turbo Assembler	 Version 3.2	    12/19/15 15:17:59	    Page 8
+    382	014A  BF 0081r		       mov di, OFFSET HEX_Out	       ; First argument: pointer
+    383	014D  A1 006Fr		       mov ax, lineCountH		; Second argument: Integer
+    384	0150  E8 FFCB		       call IntegerToHexFromMap
+    385
+    386	0153  B9 0002		       mov cx, 2
+    387	0156  B4 40		       mov   ah, 40h
+    388	0158  8B 1E 0155r	       mov bx, destFHandle
+    389	015C  BA 0081r		       lea dx, HEX_Out
+    390	015F  CD 21		       int 21h
+    391
+    392	0161  BF 0081r		       mov di, OFFSET HEX_Out	       ; First argument: pointer
+    393	0164  A1 006Dr		       mov ax, lineCount	       ; Second	argument: Integer
+    394	0167  E8 FFB4		       call IntegerToHexFromMap
+    395
+    396	016A  B9 0002		       mov cx, 2
+    397	016D  B4 40		       mov   ah, 40h
+    398	016F  8B 1E 0155r	       mov bx, destFHandle
+    399	0173  BA 0081r		       lea dx, HEX_Out
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 8
 dis.ASM
 
 
 
-    400	0184			     incLineNumber PROC
-    401					     ; --- jei lineCount=255 ir	norim INC, reikia ji prilygint 0 ir lineCountH ++
-    402	0184  81 3E 006Dr 00FF		     cmp [lineCount], 255
-    403	018A  75 0E			     jne nereikTvarkytiDidelioHex
-    404	018C  C7 06 006Dr 0000		     mov [lineCount], 0
-    405	0192  FF 06 006Fr		     inc [lineCountH]
-    406	0196  FF 0E 006Dr		     dec [lineCount]
-    407	019A				     nereikTvarkytiDidelioHex:
-    408	019A  FF 06 006Dr		     inc [lineCount]
-    409					     ; ---
-    410	019E  C3			     ret
-    411	019F			     incLineNumber ENDP
-    412
-    413
-    414	019F			     com_unk PROC
-    415	019F  E8 0027		     call printHexByte
-    416	01A2  51		     push cx
-    417	01A3  50		     push ax
-    418
-    419	01A4  B9 0017		      mov cx, 23
-    420	01A7  B4 40		      mov ah, 40h
-    421	01A9  8B 1E 0152r	      mov bx, destFHandle
-    422	01AD  BA 0099r		      lea dx, line_unkn
-    423	01B0  CD 21		      int 21h
-    424
-    425	01B2  58		      pop ax
-    426	01B3  59		      pop cx
-    427	01B4  C3		      ret
-    428	01B5			     com_unk ENDP
-    429
-    430	01B5			     readToBuff	PROC
-    431	01B5  8B 1E 0149r	     mov     bx, sourceFHandle
-    432	01B9  BA 0154r		     mov     dx, offset	buffer	     ; address of buffer in dx
-    433	01BC  B9 0064		     mov     cx, 100			     ; kiek baitu nuskaitysim
-    434	01BF  B4 3F		     mov     ah, 3fh		     ; function	3Fh - read from	file
-    435	01C1  CD 21		     int     21h
-    436
-    437	01C3  8B C8		     mov     cx, ax		     ; bytes actually read
-    438	01C5  3D 0000		     cmp     ax, 0
-    439	01C8  C3		     ret
-    440	01C9			     readToBuff	ENDP
-    441
-    442	01C9			     printHexByte PROC
-    443	01C9  51		     push cx
-    444	01CA  50		     push ax
-    445
-    446	01CB  BF 0081r		     mov di, OFFSET HEX_Out
-    447	01CE  E8 FF4A		     call IntegerToHexFromMap
-    448	01D1  B9 0002		     mov cx, 2
-    449	01D4  B4 40		     mov ah, 40h
-    450	01D6  8B 1E 0152r	     mov bx, destFHandle
-    451	01DA  BA 0081r		     lea dx, HEX_Out
-    452	01DD  CD 21		     int 21h
+    400	0176  CD 21		       int 21h
+    401
+    402	0178  B9 0003		       mov cx, 3
+    403	017B  B4 40		       mov ah, 40h
+    404	017D  8B 1E 0155r	       mov bx, destFHandle
+    405	0181  BA 0086r		       lea dx, lineStringAdd
+    406	0184  CD 21		       int 21h
+    407
+    408	0186  5F			     pop di
+    409	0187  58			     pop ax
+    410	0188  5E		       pop si
+    411	0189  59		       pop cx
+    412	018A  C3		       ret
+    413	018B			     printLineNumber ENDP
+    414
+    415	018B			     incLineNumber PROC
+    416					     ; --- jei lineCount=255 ir	norim INC, reikia ji prilygint 0 ir lineCountH ++
+    417	018B  81 3E 006Dr 00FF		     cmp [lineCount], 255
+    418	0191  75 0E			     jne nereikTvarkytiDidelioHex
+    419	0193  C7 06 006Dr 0000		     mov [lineCount], 0
+    420	0199  FF 06 006Fr		     inc [lineCountH]
+    421	019D  FF 0E 006Dr		     dec [lineCount]
+    422	01A1				     nereikTvarkytiDidelioHex:
+    423	01A1  FF 06 006Dr		     inc [lineCount]
+    424					     ; ---
+    425	01A5  C3			     ret
+    426	01A6			     incLineNumber ENDP
+    427
+    428
+    429	01A6			     com_unk PROC
+    430	01A6  57		     push di
+    431	01A7  E8 0028		     call printHexByte
+    432	01AA  51		     push cx
+    433	01AB  50		     push ax
+    434
+    435	01AC  B9 0017		      mov cx, 23
+    436	01AF  B4 40		      mov ah, 40h
+    437	01B1  8B 1E 0155r	      mov bx, destFHandle
+    438	01B5  BA 0099r		      lea dx, line_unkn
+    439	01B8  CD 21		      int 21h
+    440
+    441	01BA  58		      pop ax
+    442	01BB  59		      pop cx
+    443	01BC  5F		      pop di
+    444	01BD  C3		      ret
+    445	01BE			     com_unk ENDP
+    446
+    447	01BE			     readToBuff	PROC
+    448	01BE  8B 1E 014Cr	     mov     bx, sourceFHandle
+    449	01C2  BA 0157r		     mov     dx, offset	buffer	     ; address of buffer in dx
+    450	01C5  B9 0064		     mov     cx, 100			     ; kiek baitu nuskaitysim
+    451	01C8  B4 3F		     mov     ah, 3fh		     ; function	3Fh - read from	file
+    452	01CA  CD 21		     int     21h
     453
-    454	01DF  58		     pop ax
-    455	01E0  59		     pop cx
-    456	01E1  C3		     ret
-Turbo Assembler	 Version 3.2	    12/19/15 15:17:59	    Page 9
+    454	01CC  8B C8		     mov     cx, ax		     ; bytes actually read
+    455	01CE  3D 0000		     cmp     ax, 0
+    456	01D1  C3		     ret
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 9
 dis.ASM
 
 
 
-    457	01E2			     printHexByte ENDP
+    457	01D2			     readToBuff	ENDP
     458
-    459
-    460				     ;------------- IN su portu
-    461	01E2			     com_in2 PROC
-    462	01E2  E8 FFE4		     call printHexByte
-    463	01E5  83 F9 01		     cmp cx, 1
-    464	01E8  75 03		     jne skipRefillin2
-    465	01EA  E8 FFC8		     call readToBuff
-    466	01ED			     skipRefillin2:
-    467	01ED  AC		     lodsb
-    468	01EE  50		     push ax
-    469	01EF  49		     dec cx
-    470	01F0  E8 FFD6		     call printHexByte
-    471	01F3  E8 FF8E		     call incLineNumber
-    472	01F6  E8 0180		     call printDoubleTab
-    473				     ;TODO normalia printString	funkcija, suskaiciuot cx fja
-    474	01F9  51		     push cx
-    475	01FA  B9 0002		     mov cx, 2
-    476	01FD  B4 40		     mov ah, 40h
-    477	01FF  8B 1E 0152r	     mov bx, destFHandle
-    478	0203  BA 00BFr		     mov dx, offset com_names +	9
-    479	0206  CD 21		     int 21h
-    480	0208  59		     pop cx
-    481
-    482	0209  E8 016D		     call printDoubleTab
-    483
-    484	020C  51		     push cx
-    485	020D  B9 0002		     mov cx, 2
-    486	0210  B4 40		     mov ah, 40h
-    487	0212  8B 1E 0152r	     mov bx, destFHandle
-    488	0216  BA 00D9r		     mov dx, offset mod11w0reg + 0
-    489	0219  CD 21		     int 21h
-    490	021B  59		     pop cx
-    491
-    492	021C  E8 018D		     call printOperandSeparator
-    493
-    494	021F  58		     pop ax
-    495	0220  E8 FFA6		     call printHexByte
-    496	0223  E8 0164		     call printHNewline
-    497	0226  E9 FE83		     jmp inc_lineCount
-    498	0229			     com_in2 ENDP
-    499				     ;---------
-    500
-    501				     ;------------- INT	su kodu
-    502	0229			     com_int2 PROC
-    503	0229  E8 FF9D		     call printHexByte
-    504	022C  83 F9 01		     cmp cx, 1
-    505	022F  75 03		     jne skipRefillint2
-    506	0231  E8 FF81		     call readToBuff
-    507	0234			     skipRefillint2:
-    508	0234  AC		     lodsb
-    509	0235  50		     push ax
-    510	0236  49		     dec cx
-    511	0237  E8 FF8F		     call printHexByte
-    512	023A  E8 FF47		     call incLineNumber
-    513	023D  E8 0139		     call printDoubleTab
-Turbo Assembler	 Version 3.2	    12/19/15 15:17:59	    Page 10
+    459	01D2			     printHexByte PROC
+    460	01D2  51		     push cx
+    461	01D3  50		     push ax
+    462	01D4  57		     push di
+    463	01D5  53		     push bx
+    464
+    465	01D6  BF 0081r		     mov di, OFFSET HEX_Out
+    466	01D9  E8 FF42		     call IntegerToHexFromMap
+    467	01DC  B9 0002		     mov cx, 2
+    468	01DF  B4 40		     mov ah, 40h
+    469	01E1  8B 1E 0155r	     mov bx, destFHandle
+    470	01E5  BA 0081r		     lea dx, HEX_Out
+    471	01E8  CD 21		     int 21h
+    472
+    473	01EA  5B		     pop bx
+    474	01EB  5F		     pop di
+    475	01EC  58		     pop ax
+    476	01ED  59		     pop cx
+    477	01EE  C3		     ret
+    478	01EF			     printHexByte ENDP
+    479
+    480
+    481				     ;------------- IN su portu
+    482	01EF			     com_in2 PROC
+    483	01EF  E8 FFE0		     call printHexByte
+    484	01F2  83 F9 01		     cmp cx, 1
+    485	01F5  75 03		     jne skipRefillin2
+    486	01F7  E8 FFC4		     call readToBuff
+    487	01FA			     skipRefillin2:
+    488	01FA  AC		     lodsb
+    489	01FB  50		     push ax
+    490	01FC  49		     dec cx
+    491	01FD  E8 FFD2		     call printHexByte
+    492	0200  E8 FF88		     call incLineNumber
+    493	0203  E8 02E9		     call printDoubleTab
+    494				     ;TODO normalia printString	funkcija, suskaiciuot cx fja
+    495	0206  51		     push cx
+    496	0207  B9 0002		     mov cx, 2
+    497	020A  B4 40		     mov ah, 40h
+    498	020C  8B 1E 0155r	     mov bx, destFHandle
+    499	0210  BA 00BFr		     mov dx, offset com_names +	9
+    500	0213  CD 21		     int 21h
+    501	0215  59		     pop cx
+    502
+    503	0216  E8 02D6		     call printDoubleTab
+    504
+    505	0219  51		     push cx
+    506	021A  B9 0002		     mov cx, 2
+    507	021D  B4 40		     mov ah, 40h
+    508	021F  8B 1E 0155r	     mov bx, destFHandle
+    509	0223  BA 00D9r		     mov dx, offset mod11w0reg + 0
+    510	0226  CD 21		     int 21h
+    511	0228  59		     pop cx
+    512
+    513	0229  E8 030B		     call printOperandSeparator
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 10
 dis.ASM
 
 
 
-    514				     ;TODO normalia printString	funkcija, suskaiciuot cx fja
-    515	0240  51		     push cx
-    516	0241  B9 0003		     mov cx, 3
-    517	0244  B4 40		     mov ah, 40h
-    518	0246  8B 1E 0152r	     mov bx, destFHandle
-    519	024A  BA 00C7r		     mov dx, offset com_names +	17
-    520	024D  CD 21		     int 21h
-    521	024F  59		     pop cx
-    522
-    523	0250  E8 0126		     call printDoubleTab
-    524	0253  58		     pop ax
-    525	0254  E8 FF72		     call printHexByte
-    526	0257  E8 0130		     call printHNewline
-    527	025A  E9 FE4F		     jmp inc_lineCount
-    528	025D  C3		     ret
-    529	025E			     com_int2 ENDP
-    530				     ;---------
-    531
-    532				     ;----------------------IRET
-    533	025E			     com_iret PROC
-    534	025E  E8 FF68		      call printHexByte
-    535	0261  E8 0115		      call printDoubleTab
-    536	0264  51		      push cx
-    537	0265  B9 0004		      mov cx, 4
-    538	0268  B4 40		      mov ah, 40h
-    539	026A  8B 1E 0152r	      mov bx, destFHandle
-    540	026E  BA 00C2r		      mov dx, offset com_names + 12
-    541	0271  CD 21		      int 21h
-    542	0273  59		      pop cx
-    543	0274  E8 0124		      call printNewline
-    544	0277  E9 FE32		      jmp inc_lineCount
-    545	027A  C3		      ret
-    546	027B			     com_iret ENDP
-    547				     ;---------
-    548
-    549				     ;----------------------INT	3
-    550	027B			     com_int PROC
-    551	027B  E8 FF4B		      call printHexByte
-    552	027E  E8 00F8		      call printDoubleTab
-    553	0281  51		      push cx
-    554	0282  B9 0003		      mov cx, 3
-    555	0285  B4 40		      mov ah, 40h
-    556	0287  8B 1E 0152r	      mov bx, destFHandle
-    557	028B  BA 00C7r		      mov dx, offset com_names + 17
-    558	028E  CD 21		      int 21h
-    559	0290  59		      pop cx
-    560	0291  E8 00E5		      call printDoubleTab
-    561	0294  B0 03		      mov al, 03h
-    562	0296  E8 FF30		      call printHexByte
-    563	0299  E8 00FF		      call printNewline
-    564	029C  E9 FE0D		      jmp inc_lineCount
-    565	029F  C3		      ret
-    566	02A0			     com_int ENDP
-    567				     ;---------
-    568
-    569				     ;----------------------IN
-    570	02A0			     com_in PROC
-Turbo Assembler	 Version 3.2	    12/19/15 15:17:59	    Page 11
+    514
+    515	022C  58		     pop ax
+    516	022D  E8 FFA2		     call printHexByte
+    517	0230  E8 02CF		     call printHNewline
+    518	0233  E9 FE79		     jmp inc_lineCount
+    519	0236			     com_in2 ENDP
+    520				     ;---------
+    521
+    522				     ;------------- INT	su kodu
+    523	0236			     com_int2 PROC
+    524	0236  E8 FF99		     call printHexByte
+    525	0239  83 F9 01		     cmp cx, 1
+    526	023C  75 03		     jne skipRefillint2
+    527	023E  E8 FF7D		     call readToBuff
+    528	0241			     skipRefillint2:
+    529	0241  AC		     lodsb
+    530	0242  50		     push ax
+    531	0243  49		     dec cx
+    532	0244  E8 FF8B		     call printHexByte
+    533	0247  E8 FF41		     call incLineNumber
+    534	024A  E8 02A2		     call printDoubleTab
+    535				     ;TODO normalia printString	funkcija, suskaiciuot cx fja
+    536	024D  51		     push cx
+    537	024E  B9 0003		     mov cx, 3
+    538	0251  B4 40		     mov ah, 40h
+    539	0253  8B 1E 0155r	     mov bx, destFHandle
+    540	0257  BA 00C7r		     mov dx, offset com_names +	17
+    541	025A  CD 21		     int 21h
+    542	025C  59		     pop cx
+    543
+    544	025D  E8 028F		     call printDoubleTab
+    545	0260  58		     pop ax
+    546	0261  E8 FF6E		     call printHexByte
+    547	0264  E8 029B		     call printHNewline
+    548	0267  E9 FE45		     jmp inc_lineCount
+    549	026A  C3		     ret
+    550	026B			     com_int2 ENDP
+    551				     ;---------
+    552
+    553				     ;----------------------IRET
+    554	026B			     com_iret PROC
+    555	026B  E8 FF64		      call printHexByte
+    556	026E  E8 027E		      call printDoubleTab
+    557	0271  51		      push cx
+    558	0272  B9 0004		      mov cx, 4
+    559	0275  B4 40		      mov ah, 40h
+    560	0277  8B 1E 0155r	      mov bx, destFHandle
+    561	027B  BA 00C2r		      mov dx, offset com_names + 12
+    562	027E  CD 21		      int 21h
+    563	0280  59		      pop cx
+    564	0281  E8 028F		      call printNewline
+    565	0284  E9 FE28		      jmp inc_lineCount
+    566	0287  C3		      ret
+    567	0288			     com_iret ENDP
+    568				     ;---------
+    569
+    570				     ;----------------------INT	3
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 11
 dis.ASM
 
 
 
-    571	02A0  80 E3 01		      and bl, 00000001b
-    572	02A3  80 FB 00		      cmp bl, 0
-    573	02A6  75 06		      jne in_ax
-    574	02A8  BA 00D9r		      mov dx, offset mod11w0reg+0
-    575	02AB  EB 04 90		      jmp print_in
-    576	02AE			      in_ax:
-    577	02AE  BA 00F1r		      mov dx, offset mod11w1reg+0
-    578	02B1			      print_in:
-    579	02B1  52		      push dx
-    580	02B2  E8 FF14		      call printHexByte
-    581	02B5  E8 00C1		      call printDoubleTab
-    582	02B8  51		      push cx
-    583	02B9  B9 0002		      mov cx, 2
-    584	02BC  B4 40		      mov ah, 40h
-    585	02BE  8B 1E 0152r	      mov bx, destFHandle
-    586	02C2  BA 00BFr		      mov dx, offset com_names + 9
-    587	02C5  CD 21		      int 21h
-    588	02C7  59		      pop cx
-    589	02C8  E8 00AE		      call printDoubleTab
-    590
-    591	02CB  5A		     pop dx
-    592	02CC  51		     push cx
-    593	02CD  B9 0002		     mov cx, 2
-    594	02D0  B4 40		     mov ah, 40h
-    595	02D2  8B 1E 0152r	     mov bx, destFHandle
-    596	02D6  CD 21		     int 21h
-    597	02D8  59		     pop cx
-    598	02D9  E8 00D0		     call printOperandSeparator
-    599	02DC  51		     push cx
-    600	02DD  B9 0002		     mov cx, 2
-    601	02E0  B4 40		     mov ah, 40h
-    602	02E2  8B 1E 0152r	     mov bx, destFHandle
-    603	02E6  BA 00F7r		     mov dx, offset mod11w1reg + 6
-    604	02E9  CD 21		     int 21h
-    605	02EB  59		     pop cx
-    606
-    607	02EC  E8 00AC		      call printNewline
-    608	02EF  E9 FDBA		      jmp inc_lineCount
-    609	02F2  C3		      ret
-    610	02F3			     com_in ENDP
-    611				     ;---------
-    612
-    613				     ;----------------------XCHG
-    614	02F3			     com_xchg PROC
-    615	02F3  50		     push ax
-    616	02F4  E8 FED2		     call printHexByte
-    617	02F7  E8 007F		     call printDoubleTab
-    618	02FA  58		     pop ax
-    619	02FB  8A D8		     mov bl, al
-    620	02FD  80 E3 07		     and bl, 00000111b
-    621	0300  80 FB 00		     cmp bl, 00000000b ; ax is ax
-    622	0303  75 06		     jne xchgnotax
-    623	0305  BA 00F1r		     mov dx, offset mod11w1reg + 0
-    624	0308  EB 1D 90		     jmp xchgprint
-    625	030B			     xchgnotax:
-    626	030B  80 FB 01		     cmp bl, 00000001b ; cx is ax
-    627	030E  75 06		     jne xchgnotcx
-Turbo Assembler	 Version 3.2	    12/19/15 15:17:59	    Page 12
+    571	0288			     com_int PROC
+    572	0288  E8 FF47		      call printHexByte
+    573	028B  E8 0261		      call printDoubleTab
+    574	028E  51		      push cx
+    575	028F  B9 0003		      mov cx, 3
+    576	0292  B4 40		      mov ah, 40h
+    577	0294  8B 1E 0155r	      mov bx, destFHandle
+    578	0298  BA 00C7r		      mov dx, offset com_names + 17
+    579	029B  CD 21		      int 21h
+    580	029D  59		      pop cx
+    581	029E  E8 024E		      call printDoubleTab
+    582	02A1  B0 03		      mov al, 03h
+    583	02A3  E8 FF2C		      call printHexByte
+    584	02A6  E8 026A		      call printNewline
+    585	02A9  E9 FE03		      jmp inc_lineCount
+    586	02AC  C3		      ret
+    587	02AD			     com_int ENDP
+    588				     ;---------
+    589
+    590				     ;----------------------IN
+    591	02AD			     com_in PROC
+    592	02AD  80 E3 01		      and bl, 00000001b
+    593	02B0  80 FB 00		      cmp bl, 0
+    594	02B3  75 06		      jne in_ax
+    595	02B5  BA 00D9r		      mov dx, offset mod11w0reg+0
+    596	02B8  EB 04 90		      jmp print_in
+    597	02BB			      in_ax:
+    598	02BB  BA 00F1r		      mov dx, offset mod11w1reg+0
+    599	02BE			      print_in:
+    600	02BE  52		      push dx
+    601	02BF  E8 FF10		      call printHexByte
+    602	02C2  E8 022A		      call printDoubleTab
+    603	02C5  51		      push cx
+    604	02C6  B9 0002		      mov cx, 2
+    605	02C9  B4 40		      mov ah, 40h
+    606	02CB  8B 1E 0155r	      mov bx, destFHandle
+    607	02CF  BA 00BFr		      mov dx, offset com_names + 9
+    608	02D2  CD 21		      int 21h
+    609	02D4  59		      pop cx
+    610	02D5  E8 0217		      call printDoubleTab
+    611
+    612	02D8  5A		     pop dx
+    613	02D9  51		     push cx
+    614	02DA  B9 0002		     mov cx, 2
+    615	02DD  B4 40		     mov ah, 40h
+    616	02DF  8B 1E 0155r	     mov bx, destFHandle
+    617	02E3  CD 21		     int 21h
+    618	02E5  59		     pop cx
+    619	02E6  E8 024E		     call printOperandSeparator
+    620	02E9  51		     push cx
+    621	02EA  B9 0002		     mov cx, 2
+    622	02ED  B4 40		     mov ah, 40h
+    623	02EF  8B 1E 0155r	     mov bx, destFHandle
+    624	02F3  BA 00F7r		     mov dx, offset mod11w1reg + 6
+    625	02F6  CD 21		     int 21h
+    626	02F8  59		     pop cx
+    627
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 12
 dis.ASM
 
 
 
-    628	0310  BA 00F4r		     mov dx, offset mod11w1reg + 3
-    629	0313  EB 12 90		     jmp xchgprint
-    630
-    631	0316			     xchgnotcx:
-    632	0316  80 FB 02		     cmp bl, 00000010b ; dx is ax
-    633	0319  75 06		     jne xchgnotdx
-    634	031B  BA 00F7r		     mov dx, offset mod11w1reg + 6
-    635	031E  EB 07 90		     jmp xchgprint
-    636
-    637	0321			     xchgnotdx:	; turi buti bx
-    638	0321  BA 00FAr		     mov dx, offset mod11w1reg + 9
-    639	0324  EB 01 90		     jmp xchgprint
-    640
-    641	0327			     xchgprint:
-    642	0327  52		     push dx
-    643
-    644	0328  51		     push cx
-    645	0329  B9 0004		     mov cx, 4
-    646	032C  B4 40		     mov ah, 40h
-    647	032E  8B 1E 0152r	     mov bx, destFHandle
-    648	0332  BA 00CFr		     mov dx, offset com_names +	25
-    649	0335  CD 21		     int 21h
-    650	0337  59		     pop cx
+    628	02F9  E8 0217		      call printNewline
+    629	02FC  E9 FDB0		      jmp inc_lineCount
+    630	02FF  C3		      ret
+    631	0300			     com_in ENDP
+    632				     ;---------
+    633
+    634				     ;----------------------XCHG
+    635	0300			     com_xchg PROC
+    636	0300  50		     push ax
+    637	0301  E8 FECE		     call printHexByte
+    638	0304  E8 01E8		     call printDoubleTab
+    639	0307  58		     pop ax
+    640	0308  8A D8		     mov bl, al
+    641	030A  80 E3 07		     and bl, 00000111b
+    642	030D  80 FB 00		     cmp bl, 00000000b ; ax is ax
+    643	0310  75 06		     jne xchgnotax
+    644	0312  BA 00F1r		     mov dx, offset mod11w1reg + 0
+    645	0315  EB 1D 90		     jmp xchgprint
+    646	0318			     xchgnotax:
+    647	0318  80 FB 01		     cmp bl, 00000001b ; cx is ax
+    648	031B  75 06		     jne xchgnotcx
+    649	031D  BA 00F4r		     mov dx, offset mod11w1reg + 3
+    650	0320  EB 12 90		     jmp xchgprint
     651
-    652
-    653	0338  E8 003E		     call printDoubleTab
-    654
-    655	033B  5A		     pop dx
-    656	033C  51		     push cx
-    657	033D  B9 0002		     mov cx, 2
-    658	0340  B4 40		     mov ah, 40h
-    659	0342  8B 1E 0152r	     mov bx, destFHandle
-    660
-    661	0346  CD 21		     int 21h
-    662	0348  59		     pop cx
-    663
+    652	0323			     xchgnotcx:
+    653	0323  80 FB 02		     cmp bl, 00000010b ; dx is ax
+    654	0326  75 06		     jne xchgnotdx
+    655	0328  BA 00F7r		     mov dx, offset mod11w1reg + 6
+    656	032B  EB 07 90		     jmp xchgprint
+    657
+    658	032E			     xchgnotdx:	; turi buti bx
+    659	032E  BA 00FAr		     mov dx, offset mod11w1reg + 9
+    660	0331  EB 01 90		     jmp xchgprint
+    661
+    662	0334			     xchgprint:
+    663	0334  52		     push dx
     664
-    665	0349  E8 0060		     call printOperandSeparator
-    666
-    667	034C  51		     push cx
-    668	034D  B9 0002		     mov cx, 2
-    669	0350  B4 40		     mov ah, 40h
-    670	0352  8B 1E 0152r	     mov bx, destFHandle
-    671	0356  BA 00F1r		     mov dx, offset mod11w1reg + 0
-    672				     ;mov dx, offset com_names
-    673	0359  CD 21		     int 21h
-    674	035B  59		     pop cx
-    675	035C  E8 003C		     call printNewline
-    676	035F  E9 FD4A		     jmp inc_lineCount
-    677
-    678	0362  C3		     ret
-    679	0363			     com_xchg ENDP
-    680
+    665	0335  51		     push cx
+    666	0336  B9 0004		     mov cx, 4
+    667	0339  B4 40		     mov ah, 40h
+    668	033B  8B 1E 0155r	     mov bx, destFHandle
+    669	033F  BA 00CFr		     mov dx, offset com_names +	25
+    670	0342  CD 21		     int 21h
+    671	0344  59		     pop cx
+    672
+    673
+    674	0345  E8 01A7		     call printDoubleTab
+    675
+    676	0348  5A		     pop dx
+    677	0349  51		     push cx
+    678	034A  B9 0002		     mov cx, 2
+    679	034D  B4 40		     mov ah, 40h
+    680	034F  8B 1E 0155r	     mov bx, destFHandle
     681
-    682				     ; ------------------------------ LES
-    683	0363			     com_les PROC
+    682	0353  CD 21		     int 21h
+    683	0355  59		     pop cx
     684
-Turbo Assembler	 Version 3.2	    12/19/15 15:17:59	    Page 13
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 13
 dis.ASM
 
 
 
-    685	0363  E8 FE63		     call printHexByte
-    686	0366  83 F9 01		     cmp cx, 1
-    687	0369  75 03		     jne skipRefillLes
-    688	036B  E8 FE47		     call readToBuff
-    689	036E			     skipRefillLes:
-    690	036E  AC		     lodsb
-    691	036F  50		     push ax
-    692	0370  49		     dec cx
-    693	0371  E8 FE55		     call printHexByte
-    694	0374  E8 FE0D		     call incLineNumber
-    695	0377  58		     pop ax
-    696	0378  C3		     ret
-    697	0379			     com_les ENDP
+    685
+    686	0356  E8 01DE		     call printOperandSeparator
+    687
+    688	0359  51		     push cx
+    689	035A  B9 0002		     mov cx, 2
+    690	035D  B4 40		     mov ah, 40h
+    691	035F  8B 1E 0155r	     mov bx, destFHandle
+    692	0363  BA 00F1r		     mov dx, offset mod11w1reg + 0
+    693				     ;mov dx, offset com_names
+    694	0366  CD 21		     int 21h
+    695	0368  59		     pop cx
+    696	0369  E8 01A7		     call printNewline
+    697	036C  E9 FD40		     jmp inc_lineCount
     698
-    699				     ;---------
-    700
-    701				     ;formatavimo proceduros
-    702	0379			     printDoubleTab PROC
-    703	0379  51		      push cx
-    704	037A  B9 0002		      mov cx, 2
-    705	037D  B4 40		      mov ah, 40h
-    706	037F  8B 1E 0152r	      mov bx, destFHandle
-    707	0383  BA 008Cr		      lea dx, line_doubleTab
-    708	0386  CD 21		      int 21h
-    709	0388  59		      pop cx
-    710	0389  C3		      ret
-    711	038A			     printDoubleTab ENDP
-    712
-    713	038A			     printHNewline PROC
-    714	038A  51		      push cx
-    715	038B  B9 0003		      mov cx, 3
-    716	038E  B4 40		      mov ah, 40h
-    717	0390  8B 1E 0152r	      mov bx, destFHandle
-    718	0394  BA 008Fr		      lea dx, line_hNewLine
-    719	0397  CD 21		      int 21h
-    720	0399  59		      pop cx
-    721	039A  C3		      ret
-    722	039B			     printHNewline ENDP
-    723
-    724	039B			     printNewline PROC
-    725	039B  51		      push cx
-    726	039C  B9 0002		      mov cx, 2
-    727	039F  B4 40		      mov ah, 40h
-    728	03A1  8B 1E 0152r	      mov bx, destFHandle
-    729	03A5  BA 0093r		      lea dx, line_NewLine
-    730	03A8  CD 21		      int 21h
-    731	03AA  59		      pop cx
-    732	03AB  C3		      ret
-    733	03AC			     printNewline ENDP
-    734
-    735	03AC			     printOperandSeparator PROC
-    736	03AC  51		      push cx
-    737	03AD  B9 0002		      mov cx, 2
-    738	03B0  B4 40		      mov ah, 40h
-    739	03B2  8B 1E 0152r	      mov bx, destFHandle
-    740	03B6  BA 0096r		      lea dx, line_OperandSeparator
-    741	03B9  CD 21		      int 21h
-Turbo Assembler	 Version 3.2	    12/19/15 15:17:59	    Page 14
+    699	036F  C3		     ret
+    700	0370			     com_xchg ENDP
+    701
+    702
+    703				     ; ------------------------------ LES
+    704	0370			     com_les PROC
+    705
+    706	0370  E8 FE5F		     call printHexByte
+    707	0373  83 F9 01		     cmp cx, 1
+    708	0376  75 03		     jne skipRefillLes
+    709	0378  E8 FE43		     call readToBuff
+    710	037B			     skipRefillLes:
+    711	037B  AC		     lodsb
+    712	037C  49		     dec cx
+    713
+    714	037D  E8 FE52		     call printHexByte
+    715	0380  E8 FE08		     call incLineNumber
+    716
+    717
+    718	0383  8A D8		     mov bl, al
+    719	0385  80 E3 C0		     and bl, 11000000b
+    720	0388  80 FB 00		     cmp bl, 00000000b
+    721	038B  75 42		     jne LESmodnot00
+    722
+    723				     ;nuskaitome reg, cia kai w=1
+    724	038D  E8 0043		     call scanREG
+    725	0390  E8 00DB		     call scanRM
+    726
+    727	0393  8A D8		     mov bl, al
+    728	0395  80 E3 07		     and bl, 00000111b
+    729	0398  80 FB 06		     cmp bl, 00000110b
+    730	039B  75 32		     jne rmNot110
+    731
+    732
+    733				     ; skaitom poslinkio LowByte
+    734	039D  83 F9 01		     cmp cx, 1
+    735	03A0  75 03		     jne skipRefillLes2
+    736	03A2  E8 FE19		     call readToBuff
+    737	03A5			     skipRefillLes2:
+    738	03A5  AC		     lodsb
+    739	03A6  A2 0220r		     mov [dLow], al
+    740	03A9  49		     dec cx
+    741	03AA  E8 FDDE		     call incLineNumber
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 14
 dis.ASM
 
 
 
-    742	03BB  59		      pop cx
-    743	03BC  C3		      ret
-    744	03BD			     printOperandSeparator ENDP
-    745
-    746
-    747				     end START
-Turbo Assembler	 Version 3.2	    12/19/15 15:17:59	    Page 15
+    742
+    743				     ;Skaitom poslinkio	HighByte
+    744	03AD  83 F9 01		     cmp cx, 1
+    745	03B0  75 03		     jne skipRefillLes3
+    746	03B2  E8 FE09		     call readToBuff
+    747	03B5			     skipRefillLes3:
+    748	03B5  AC		     lodsb
+    749	03B6  A2 0221r		     mov [dHigh], al
+    750	03B9  49		     dec cx
+    751	03BA  E8 FDCE		     call incLineNumber
+    752
+    753
+    754	03BD  E8 FE12		     call printHexByte
+    755	03C0  A0 0220r		     mov al, [dLow]
+    756	03C3  E8 FE0C		     call printHexByte
+    757
+    758	03C6  E8 015B		     call printDIstring
+    759
+    760
+    761
+    762	03C9  E8 0147		     call printNewline
+    763	03CC  E8 0144		     call printNewline
+    764
+    765	03CF			     rmNot110:
+    766
+    767
+    768
+    769	03CF			     LESmodnot00:
+    770	03CF  E8 0141		     call printNewline
+    771
+    772	03D2  C3		     ret
+    773	03D3			     com_les ENDP
+    774
+    775
+    776	03D3			     scanREG PROC
+    777	03D3  56		     push si
+    778
+    779	03D4  8A D8		     mov bl, al
+    780	03D6  80 E3 38		     and bl, 00111000b
+    781	03D9  80 FB 38		     cmp bl, 00111000b
+    782	03DC  75 08		     jne LESregnot111
+    783	03DE  B7 02		     mov bh, 2 ; nusakom kiek simboliu
+    784	03E0  BE 0106r		     mov si, offset mod11w1reg + 21 ; di bus nukreipta i bufferReg
+    785	03E3  E8 0162		     call fillRegBuffer
+    786	03E6			     LESregnot111:
+    787
+    788	03E6  8A D8		     mov bl, al
+    789	03E8  80 E3 38		     and bl, 00111000b
+    790	03EB  80 FB 30		     cmp bl, 00110000b
+    791	03EE  75 08		     jne LESregnot110
+    792	03F0  B7 02		     mov bh, 2
+    793	03F2  BE 0103r		     mov si, offset mod11w1reg + 18
+    794	03F5  E8 0150		     call fillRegBuffer
+    795	03F8			     LESregnot110:
+    796
+    797	03F8  8A D8		     mov bl, al
+    798	03FA  80 E3 38		     and bl, 00111000b
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 15
+dis.ASM
+
+
+
+    799	03FD  80 FB 28		     cmp bl, 00101000b
+    800	0400  75 08		     jne LESregnot101
+    801	0402  B7 02		     mov bh, 2
+    802	0404  BE 0100r		     mov si, offset mod11w1reg + 15
+    803	0407  E8 013E		     call fillRegBuffer
+    804	040A			     LESregnot101:
+    805
+    806	040A  8A D8		     mov bl, al
+    807	040C  80 E3 38		     and bl, 00111000b
+    808	040F  80 FB 20		     cmp bl, 00100000b
+    809	0412  75 08		     jne LESregnot100
+    810	0414  B7 02		     mov bh, 2
+    811	0416  BE 00FDr		     mov si, offset mod11w1reg + 12
+    812	0419  E8 012C		     call fillRegBuffer
+    813	041C			     LESregnot100:
+    814
+    815	041C  8A D8		     mov bl, al
+    816	041E  80 E3 38		     and bl, 00111000b
+    817	0421  80 FB 18		     cmp bl, 00011000b
+    818	0424  75 08		     jne LESregnot011
+    819	0426  B7 02		     mov bh, 2
+    820	0428  BE 00FAr		     mov si, offset mod11w1reg + 9
+    821	042B  E8 011A		     call fillRegBuffer
+    822	042E			     LESregnot011:
+    823
+    824	042E  8A D8		     mov bl, al
+    825	0430  80 E3 38		     and bl, 00111000b
+    826	0433  80 FB 10		     cmp bl, 00010000b
+    827	0436  75 08		     jne LESregnot010
+    828	0438  B7 02		     mov bh, 2
+    829	043A  BE 00F7r		     mov si, offset mod11w1reg + 6
+    830	043D  E8 0108		     call fillRegBuffer
+    831	0440			     LESregnot010:
+    832
+    833	0440  8A D8		     mov bl, al
+    834	0442  80 E3 38		     and bl, 00111000b
+    835	0445  80 FB 08		     cmp bl, 00001000b
+    836	0448  75 08		     jne LESregnot001
+    837	044A  B7 02		     mov bh, 2
+    838	044C  BE 00F4r		     mov si, offset mod11w1reg + 3
+    839	044F  E8 00F6		     call fillRegBuffer
+    840	0452			     LESregnot001:
+    841
+    842	0452  8A D8		     mov bl, al
+    843	0454  80 E3 38		     and bl, 00111000b
+    844	0457  80 FB 00		     cmp bl, 00000000b
+    845	045A  75 08		     jne LESregnot000
+    846	045C  B7 02		     mov bh, 2
+    847	045E  BE 00F1r		     mov si, offset mod11w1reg + 0
+    848	0461  E8 00E4		     call fillRegBuffer
+    849	0464			     LESregnot000:
+    850
+    851	0464  B7 02		     mov bh, 2
+    852	0466  BE 0109r		     mov si, offset mod11w1reg + 24
+    853	0469  E8 00DC		     call fillRegBuffer
+    854
+    855	046C  5E		     pop si
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 16
+dis.ASM
+
+
+
+    856	046D  C3		     ret
+    857	046E			     scanREG ENDP
+    858
+    859				     ; cia be 110 rm, nes ten keicias logika nuo mod
+    860	046E			     scanRM PROC
+    861
+    862	046E  56		     push si
+    863	046F  8A D8		     mov bl, al
+    864	0471  80 E3 07		     and bl, 00000111b
+    865	0474  80 FB 00		     cmp bl, 00000000b
+    866	0477  75 08		     jne rmNot000
+    867	0479  B7 06		     mov bh, 6
+    868	047B  BE 010Cr		     mov si, offset EAdress + 0
+    869	047E  E8 00C7		     call fillRegBuffer
+    870	0481			     rmNot000:
+    871
+    872	0481  8A D8		     mov bl, al
+    873	0483  80 E3 07		     and bl, 00000111b
+    874	0486  80 FB 01		     cmp bl, 00000001b
+    875	0489  75 08		     jne rmNot001
+    876	048B  B7 06		     mov bh, 6
+    877	048D  BE 0113r		     mov si, offset EAdress + 7
+    878	0490  E8 00B5		     call fillRegBuffer
+    879	0493			     rmNot001:
+    880
+    881	0493  8A D8		     mov bl, al
+    882	0495  80 E3 07		     and bl, 00000111b
+    883	0498  80 FB 02		     cmp bl, 00000010b
+    884	049B  75 08		     jne rmNot010
+    885	049D  B7 06		     mov bh, 6
+    886	049F  BE 011Ar		     mov si, offset EAdress + 14
+    887	04A2  E8 00A3		     call fillRegBuffer
+    888	04A5			     rmNot010:
+    889
+    890	04A5  8A D8		     mov bl, al
+    891	04A7  80 E3 07		     and bl, 00000111b
+    892	04AA  80 FB 03		     cmp bl, 00000011b
+    893	04AD  75 08		     jne rmNot011
+    894	04AF  B7 06		     mov bh, 6
+    895	04B1  BE 0121r		     mov si, offset EAdress + 21
+    896	04B4  E8 0091		     call fillRegBuffer
+    897	04B7			     rmNot011:
+    898
+    899	04B7  8A D8		     mov bl, al
+    900	04B9  80 E3 07		     and bl, 00000111b
+    901	04BC  80 FB 04		     cmp bl, 00000100b
+    902	04BF  75 08		     jne rmNot100
+    903	04C1  B7 06		     mov bh, 6
+    904	04C3  BE 0128r		     mov si, offset EAdress + 28
+    905	04C6  E8 007F		     call fillRegBuffer
+    906	04C9			     rmNot100:
+    907
+    908	04C9  8A D8		     mov bl, al
+    909	04CB  80 E3 07		     and bl, 00000111b
+    910	04CE  80 FB 05		     cmp bl, 00000101b
+    911	04D1  75 08		     jne rmNot101
+    912	04D3  B7 06		     mov bh, 6
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 17
+dis.ASM
+
+
+
+    913	04D5  BE 012Fr		     mov si, offset EAdress + 35
+    914	04D8  E8 006D		     call fillRegBuffer
+    915	04DB			     rmNot101:
+    916
+    917	04DB  8A D8		     mov bl, al
+    918	04DD  80 E3 07		     and bl, 00000111b
+    919	04E0  80 FB 07		     cmp bl, 00000111b
+    920	04E3  75 08		     jne rmNot111
+    921	04E5  B7 06		     mov bh, 6
+    922	04E7  BE 013Dr		     mov si, offset EAdress + 49
+    923	04EA  E8 005B		     call fillRegBuffer
+    924	04ED			     rmNot111:
+    925
+    926	04ED  5E		     pop si
+    927	04EE  C3		     ret
+    928	04EF			     scanRM ENDP
+    929
+    930				     ;---------
+    931
+    932				     ;formatavimo proceduros
+    933	04EF			     printDoubleTab PROC
+    934	04EF  51		      push cx
+    935	04F0  50		      push ax
+    936
+    937	04F1  B9 0002		      mov cx, 2
+    938	04F4  B4 40		      mov ah, 40h
+    939	04F6  8B 1E 0155r	      mov bx, destFHandle
+    940	04FA  BA 008Cr		      lea dx, line_doubleTab
+    941	04FD  CD 21		      int 21h
+    942
+    943	04FF  58		      pop ax
+    944	0500  59		      pop cx
+    945	0501  C3		      ret
+    946	0502			     printDoubleTab ENDP
+    947
+    948	0502			     printHNewline PROC
+    949	0502  51		      push cx
+    950	0503  B9 0003		      mov cx, 3
+    951	0506  B4 40		      mov ah, 40h
+    952	0508  8B 1E 0155r	      mov bx, destFHandle
+    953	050C  BA 008Fr		      lea dx, line_hNewLine
+    954	050F  CD 21		      int 21h
+    955	0511  59		      pop cx
+    956	0512  C3		      ret
+    957	0513			     printHNewline ENDP
+    958
+    959	0513			     printNewline PROC
+    960	0513  51		      push cx
+    961	0514  B9 0002		      mov cx, 2
+    962	0517  B4 40		      mov ah, 40h
+    963	0519  8B 1E 0155r	      mov bx, destFHandle
+    964	051D  BA 0093r		      lea dx, line_NewLine
+    965	0520  CD 21		      int 21h
+    966	0522  59		      pop cx
+    967	0523  C3		      ret
+    968	0524			     printNewline ENDP
+    969
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 18
+dis.ASM
+
+
+
+    970	0524			     printDIstring PROC
+    971	0524  51		      push cx
+    972	0525  B5 00		      mov ch, 0
+    973	0527  8A 0E 021Fr	      mov cl, [regBufferCount]
+    974
+    975	052B  B4 40		      mov ah, 40h
+    976	052D  8B 1E 0155r	      mov bx, destFHandle
+    977	0531  8B D7		      mov dx, di
+    978	0533  CD 21		      int 21h
+    979
+    980	0535  59		      pop cx
+    981	0536  C3		      ret
+    982	0537			     printDIstring ENDP
+    983
+    984	0537			     printOperandSeparator PROC
+    985	0537  51		      push cx
+    986	0538  B9 0002		      mov cx, 2
+    987	053B  B4 40		      mov ah, 40h
+    988	053D  8B 1E 0155r	      mov bx, destFHandle
+    989	0541  BA 0096r		      lea dx, line_OperandSeparator
+    990	0544  CD 21		      int 21h
+    991	0546  59		      pop cx
+    992	0547  C3		      ret
+    993	0548			     printOperandSeparator ENDP
+    994
+    995	0548			     fillRegBuffer PROC
+    996
+    997				     ;aprasysiu	tai pradzioj scan ciklo
+    998					     ;lea di, regBuffer
+    999	0548  51			     push cx
+   1000	0549  56			     push si
+   1001
+   1002	054A  B5 00			     mov ch, 0
+   1003	054C  8A CF			     mov cl, bh
+   1004
+   1005	054E				     pushToBuffer2:
+   1006	054E  53			     push bx
+   1007	054F  8A 1C			     mov bl, [si]
+   1008	0551  88 1D			     mov [di], bl
+   1009	0553  5B			     pop bx
+   1010	0554  46			     inc si
+   1011	0555  47			     inc di
+   1012	0556  FE 06 021Fr		     inc [regBufferCount]
+   1013	055A  E2 F2			     loop pushToBuffer2
+   1014
+   1015	055C  5E			     pop si
+   1016	055D  59			     pop cx
+   1017
+   1018	055E  C3			     ret
+   1019	055F			     fillRegBuffer ENDP
+   1020
+   1021				     end START
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 19
 Symbol Table
 
 
@@ -823,9 +1117,9 @@ Symbol Table
 
 Symbol Name			  Type	 Value
 
-??DATE				  Text	 "12/19/15"
+??DATE				  Text	 "12/20/15"
 ??FILENAME			  Text	 "dis	  "
-??TIME				  Text	 "15:17:59"
+??TIME				  Text	 "19:33:28"
 ??VERSION			  Number 0314
 @32BIT				  Text	 0
 @CODE				  Text	 _TEXT
@@ -841,33 +1135,50 @@ Symbol Name			  Type	 Value
 @WORDSIZE			  Text	 2
 APIE				  Byte	 DGROUP:0000
 ATRENKA				  Near	 _TEXT:0050
-BUFFER				  Byte	 DGROUP:0154
-CLOSEF				  Near	 _TEXT:00C2
-COM_IN				  Near	 _TEXT:02A0
-COM_IN2				  Near	 _TEXT:01E2
-COM_INT				  Near	 _TEXT:027B
-COM_INT2			  Near	 _TEXT:0229
-COM_IRET			  Near	 _TEXT:025E
-COM_LES				  Near	 _TEXT:0363
+BUFFER				  Byte	 DGROUP:0157
+CLOSEF				  Near	 _TEXT:00C5
+COM_IN				  Near	 _TEXT:02AD
+COM_IN2				  Near	 _TEXT:01EF
+COM_INT				  Near	 _TEXT:0288
+COM_INT2			  Near	 _TEXT:0236
+COM_IRET			  Near	 _TEXT:026B
+COM_LES				  Near	 _TEXT:0370
 COM_NAMES			  Byte	 DGROUP:00B6
-COM_RECOGNIZED			  Near	 _TEXT:00AC
-COM_UNK				  Near	 _TEXT:019F
-COM_XCHG			  Near	 _TEXT:02F3
-DESTF				  Byte	 DGROUP:014B
-DESTFHANDLE			  Word	 DGROUP:0152
-EADRESS				  Byte	 DGROUP:0109
+COM_RECOGNIZED			  Near	 _TEXT:00AF
+COM_UNK				  Near	 _TEXT:01A6
+COM_XCHG			  Near	 _TEXT:0300
+DESTF				  Byte	 DGROUP:014E
+DESTFHANDLE			  Word	 DGROUP:0155
+DHIGH				  Byte	 DGROUP:0221
+DLOW				  Byte	 DGROUP:0220
+EADRESS				  Byte	 DGROUP:010C
 ERR_D				  Byte	 DGROUP:0012
-ERR_DESTINATION			  Near	 _TEXT:00E5
+ERR_DESTINATION			  Near	 _TEXT:00E8
 ERR_S				  Byte	 DGROUP:0041
-ERR_SOURCE			  Near	 _TEXT:00CF
-HELP				  Near	 _TEXT:00B3
+ERR_SOURCE			  Near	 _TEXT:00D2
+FILLREGBUFFER			  Near	 _TEXT:0548
+HELP				  Near	 _TEXT:00B6
 HEXBUFFER			  Byte	 DGROUP:008A
 HEX_MAP				  Byte	 DGROUP:0071
 HEX_OUT				  Byte	 DGROUP:0081
-INCLINENUMBER			  Near	 _TEXT:0184
-INC_LINECOUNT			  Near	 _TEXT:00AC
-INTEGERTOHEXFROMMAP		  Near	 _TEXT:011B
-IN_AX				  Near	 _TEXT:02AE
+INCLINENUMBER			  Near	 _TEXT:018B
+INC_LINECOUNT			  Near	 _TEXT:00AF
+INTEGERTOHEXFROMMAP		  Near	 _TEXT:011E
+IN_AX				  Near	 _TEXT:02BB
+LESMODNOT00			  Near	 _TEXT:03CF
+LESREGNOT000			  Near	 _TEXT:0464
+LESREGNOT001			  Near	 _TEXT:0452
+LESREGNOT010			  Near	 _TEXT:0440
+LESREGNOT011			  Near	 _TEXT:042E
+LESREGNOT100			  Near	 _TEXT:041C
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 20
+Symbol Table
+
+
+
+LESREGNOT101			  Near	 _TEXT:040A
+LESREGNOT110			  Near	 _TEXT:03F8
+LESREGNOT111			  Near	 _TEXT:03E6
 LINECOUNT			  Word	 DGROUP:006D
 LINECOUNTH			  Word	 DGROUP:006F
 LINESTRINGADD			  Byte	 DGROUP:0086
@@ -877,56 +1188,73 @@ LINE_IN				  Byte	 DGROUP:00B1
 LINE_NEWLINE			  Byte	 DGROUP:0093
 LINE_OPERANDSEPARATOR		  Byte	 DGROUP:0096
 LINE_UNKN			  Byte	 DGROUP:0099
-Turbo Assembler	 Version 3.2	    12/19/15 15:17:59	    Page 16
+MOD11W0REG			  Byte	 DGROUP:00D9
+MOD11W1REG			  Byte	 DGROUP:00F1
+NEREIKTVARKYTIDIDELIOHEX	  Near	 _TEXT:01A1
+NOT_ERR_SOURCE			  Near	 _TEXT:0036
+NOT_IN				  Near	 _TEXT:0074
+NOT_IN2				  Near	 _TEXT:0067
+NOT_INT				  Near	 _TEXT:00A2
+NOT_INT2			  Near	 _TEXT:0098
+NOT_IRET			  Near	 _TEXT:008E
+NOT_LES				  Near	 _TEXT:00AC
+NOT_XCHG			  Near	 _TEXT:0084
+PRINTDISTRING			  Near	 _TEXT:0524
+PRINTDOUBLETAB			  Near	 _TEXT:04EF
+PRINTHEXBYTE			  Near	 _TEXT:01D2
+PRINTHNEWLINE			  Near	 _TEXT:0502
+PRINTLINENUMBER			  Near	 _TEXT:0146
+PRINTNEWLINE			  Near	 _TEXT:0513
+PRINTOPERANDSEPARATOR		  Near	 _TEXT:0537
+PRINT_IN			  Near	 _TEXT:02BE
+PUSHTOBUFFER2			  Near	 _TEXT:054E
+READTOBUFF			  Near	 _TEXT:01BE
+READ_FILENAME			  Near	 _TEXT:0107
+READ_FILENAME_END		  Near	 _TEXT:0115
+READ_FILENAME_NEXT		  Near	 _TEXT:011A
+READ_FILENAME_START		  Near	 _TEXT:010B
+REGBUFFER			  Byte	 DGROUP:01BB
+REGBUFFERCOUNT			  Byte	 DGROUP:021F
+RMNOT000			  Near	 _TEXT:0481
+RMNOT001			  Near	 _TEXT:0493
+RMNOT010			  Near	 _TEXT:04A5
+RMNOT011			  Near	 _TEXT:04B7
+RMNOT100			  Near	 _TEXT:04C9
+RMNOT101			  Near	 _TEXT:04DB
+RMNOT110			  Near	 _TEXT:03CF
+RMNOT111			  Near	 _TEXT:04ED
+SCANREG				  Near	 _TEXT:03D3
+SCANRM				  Near	 _TEXT:046E
+SKAITOM				  Near	 _TEXT:0039
+SKIPREFILLIN2			  Near	 _TEXT:01FA
+SKIPREFILLINT2			  Near	 _TEXT:0241
+SKIPREFILLLES			  Near	 _TEXT:037B
+SKIPREFILLLES2			  Near	 _TEXT:03A5
+SKIPREFILLLES3			  Near	 _TEXT:03B5
+SKIP_SPACES			  Near	 _TEXT:00FE
+SKIP_SPACES_END			  Near	 _TEXT:0106
+Turbo Assembler	 Version 3.2	    12/20/15 19:33:28	    Page 21
 Symbol Table
 
 
 
-MOD11W0REG			  Byte	 DGROUP:00D9
-MOD11W1REG			  Byte	 DGROUP:00F1
-NEREIKTVARKYTIDIDELIOHEX	  Near	 _TEXT:019A
-NOT_ERR_SOURCE			  Near	 _TEXT:0036
-NOT_IN				  Near	 _TEXT:0071
-NOT_IN2				  Near	 _TEXT:0064
-NOT_INT				  Near	 _TEXT:009F
-NOT_INT2			  Near	 _TEXT:0095
-NOT_IRET			  Near	 _TEXT:008B
-NOT_LES				  Near	 _TEXT:00A9
-NOT_XCHG			  Near	 _TEXT:0081
-PRINTDOUBLETAB			  Near	 _TEXT:0379
-PRINTHEXBYTE			  Near	 _TEXT:01C9
-PRINTHNEWLINE			  Near	 _TEXT:038A
-PRINTLINENUMBER			  Near	 _TEXT:0141
-PRINTNEWLINE			  Near	 _TEXT:039B
-PRINTOPERANDSEPARATOR		  Near	 _TEXT:03AC
-PRINT_IN			  Near	 _TEXT:02B1
-READTOBUFF			  Near	 _TEXT:01B5
-READ_FILENAME			  Near	 _TEXT:0104
-READ_FILENAME_END		  Near	 _TEXT:0112
-READ_FILENAME_NEXT		  Near	 _TEXT:0117
-READ_FILENAME_START		  Near	 _TEXT:0108
-SKAITOM				  Near	 _TEXT:0039
-SKIPREFILLIN2			  Near	 _TEXT:01ED
-SKIPREFILLINT2			  Near	 _TEXT:0234
-SKIPREFILLLES			  Near	 _TEXT:036E
-SKIP_SPACES			  Near	 _TEXT:00FB
-SKIP_SPACES_END			  Near	 _TEXT:0103
-SKIP_SPACES_LOOP		  Near	 _TEXT:00FB
-SOURCEF				  Byte	 DGROUP:0141
-SOURCEFHANDLE			  Word	 DGROUP:0149
+SKIP_SPACES_LOOP		  Near	 _TEXT:00FE
+SOURCEF				  Byte	 DGROUP:0144
+SOURCEFHANDLE			  Word	 DGROUP:014C
 START				  Near	 _TEXT:0000
 STARTCONVERTING			  Near	 _TEXT:0028
-XCHGNOTAX			  Near	 _TEXT:030B
-XCHGNOTCX			  Near	 _TEXT:0316
-XCHGNOTDX			  Near	 _TEXT:0321
-XCHGPRINT			  Near	 _TEXT:0327
+TEMP				  Byte	 DGROUP:0222
+XCHGNOTAX			  Near	 _TEXT:0318
+XCHGNOTCX			  Near	 _TEXT:0323
+XCHGNOTDX			  Near	 _TEXT:032E
+XCHGPRINT			  Near	 _TEXT:0334
 _6				  Near	 _TEXT:0049
-_END				  Near	 _TEXT:00CA
+_END				  Near	 _TEXT:00CD
 
 Groups & Segments		  Bit Size Align  Combine Class
 
 DGROUP				  Group
   STACK				  16  0100 Para	  Stack	  STACK
-  _DATA				  16  01B8 Word	  Public  DATA
-_TEXT				  16  03BD Word	  Public  CODE
+  _DATA				  16  0225 Word	  Public  DATA
+_TEXT				  16  055F Word	  Public  CODE
 

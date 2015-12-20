@@ -1,4 +1,4 @@
-;; Programa reaguoja i perduodamus parametrus
+	;; Programa reaguoja i perduodamus parametrus
 ;; isveda pagalba, jei nera nurodyti reikiami parametrai
 ;; source failas skaitomas dalimis
 ;; destination failas rasomas dalimis
@@ -50,14 +50,14 @@ line_unkn db 9, 9, 'Neatpazinta komanda',13,10, '$'
 
 line_in db 9,'in',9,'$'
 						;offset
-com_names 	db	'DIV$'	;0
-			db	'IDIV$'	;4
+com_names 	db	'DIV '	;0
+			db	'IDIV '	;4
 			db	'IN$'	;9
 			db	'IRET$'	;12
 			db	'INT$'	;17
-			db	'LES$'	;21
-			db	'XCHG$' ;25
-			db	'TEST$' ;30
+			db	'LES '	;21
+			db	'XCHG$' ;26
+			db	'TEST$' ;31
 ;---------------------------------------
 
 ;registrai------------------------------
@@ -87,6 +87,10 @@ EAdress		db '[bx+si$' ;0
 			db '[di   $' ;35
 			db '[bp   $' ;42
 			db '[bx   $' ;49
+
+format db '[' ;0
+       db ']' ;1
+			 db '+' ;2
 ;---------------------------------------
 
 
@@ -107,6 +111,7 @@ dLow	db 0
 dHigh db 0
 
 temp db 'abc'
+wFlag db 0
 
 .code
 
@@ -226,6 +231,14 @@ call com_les
 ;jmp not_les
 jmp com_recognized
 not_les:
+
+mov bl, al
+and bl, 11110110b
+cmp bl, 11110110b
+jne not_div
+call com_div
+jmp com_recognized
+not_div:
 
 ; Nezinoma komanda******************
 call com_unk
@@ -677,8 +690,76 @@ jmp inc_lineCount
 ret
 com_xchg ENDP
 
-
 ; ------------------------------ LES
+
+com_div proc
+call printHexByte
+
+mov bl, al
+and bl, 00000001b
+cmp bl, 00000001b
+je w1
+mov [wFlag], 0
+jmp continue1
+w1:
+mov [wFlag], 1
+continue1:
+
+cmp cx, 1
+jne skipRefilldiv
+call readToBuff
+skipRefilldiv:
+lodsb
+dec cx
+
+call printHexByte
+call incLineNumber
+
+; ziurim DIV ar IDIV
+mov bl, al
+and bl, 00111000b
+cmp bl, 00110000b
+jne itsIDIV
+push si
+mov bh, 4
+mov si, offset com_names + 0
+call fillRegBuffer
+pop si
+jmp continue2
+itsIDIV:
+push si
+mov bh, 5
+mov si, offset com_names + 4
+call fillRegBuffer
+pop si
+continue2:
+
+mov bl, al
+and bl, 11000000b
+cmp bl, 11000000b
+jne DIVmodnot11
+
+; ziurim w0 ar w1
+mov bl, [wFlag]
+cmp bl, 1
+jne not1
+call scanRM00w1
+jmp continue3
+not1:
+call scanRM00w0
+continue3:
+
+call printDoubleTab
+call printDIstring
+call printNewline
+
+DIVmodnot11:
+
+
+mov [regBufferCount], 0
+ret
+com_div endp
+
 com_les PROC
 
 call printHexByte
@@ -692,6 +773,12 @@ dec cx
 call printHexByte
 call incLineNumber
 
+; i rbuff idedu komandos pav.
+push si
+mov bh, 4
+mov si, offset com_names + 21
+call fillRegBuffer
+pop si
 
 mov bl, al
 and bl, 11000000b
@@ -728,25 +815,135 @@ mov [dHigh], al
 dec cx
 call incLineNumber
 
+call printHexByte
+mov al, [dLow]
+call printHexByte
+
+call printDoubleTab
+call printDIstring
+call PrintLeftBracket
+call printWordInBrackets
+call PrintRightBracket
+rmNot110:
+
+LESmodnot00:
+
+mov bl, al
+and bl, 11000000b
+cmp bl, 10000000b
+jne modNot10
+
+call scanREG
+call scanRM
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000110b
+jne rmNot110v2
+mov bh, 6
+mov si, offset EAdress + 42
+call fillRegBuffer
+rmNot110v2:
+
+; skaitom poslinkio LowByte
+cmp cx, 1
+jne skipRefillLes4
+call readToBuff
+skipRefillLes4:
+lodsb
+mov [dLow], al
+dec cx
+call incLineNumber
+
+cmp cx, 1
+jne skipRefillLes5
+call readToBuff
+skipRefillLes5:
+lodsb
+mov [dHigh], al
+dec cx
+call incLineNumber
 
 call printHexByte
 mov al, [dLow]
 call printHexByte
 
+call printDoubleTab
+
+push si
+mov bh, 1
+mov si, offset format + 2
+call fillRegBuffer
+pop si
+
 call printDIstring
+call printWordInBrackets
+call PrintRightBracket
+modNot10:
+
+mov bl, al
+and bl, 11000000b
+cmp bl, 01000000b
+jne modNot01
+
+;;----------------------------- 1byte
+call scanREG
+call scanRM
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000110b
+jne rmNot110v3
+mov bh, 6
+mov si, offset EAdress + 42
+call fillRegBuffer
+rmNot110v3:
+
+; skaitom poslinkio LowByte
+cmp cx, 1
+jne skipRefillLes6
+call readToBuff
+skipRefillLes6:
+lodsb
+mov [dLow], al
+dec cx
+call incLineNumber
+
+mov [dHigh], 0
+mov al, 0
+
+call printHexByte
+mov al, [dLow]
+call printHexByte
+
+call printDoubleTab
+
+push si
+mov bh, 1
+mov si, offset format + 2
+call fillRegBuffer
+pop si
+
+call printDIstring
+call printWordInBrackets
+call PrintRightBracket
+modNot01:
+
+mov bl, al
+and bl, 11000000b
+cmp bl, 11000000b
+jne modNot11
+
+call scanREG
 
 
+
+modNot11:
 
 call printNewline
-call printNewline
-
-rmNot110:
 
 
-
-LESmodnot00:
-call printNewline
-
+mov [regBufferCount], 0
 ret
 com_les ENDP
 
@@ -833,6 +1030,168 @@ call fillRegBuffer
 pop si
 ret
 scanREG ENDP
+
+scanRM00w1 proc
+
+push si
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000000b
+jne w0rmNot000
+mov bh, 2
+mov si, offset mod11w1reg + 0
+call fillRegBuffer
+w0rmNot000:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000001b
+jne w0rmNot001
+mov bh, 2
+mov si, offset mod11w1reg + 3
+call fillRegBuffer
+w0rmNot001:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000010b
+jne w0rmNot010
+mov bh, 2
+mov si, offset mod11w1reg + 6
+call fillRegBuffer
+w0rmNot010:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000011b
+jne w0rmNot011
+mov bh, 2
+mov si, offset mod11w1reg + 9
+call fillRegBuffer
+w0rmNot011:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000100b
+jne w0rmNot100
+mov bh, 2
+mov si, offset mod11w1reg + 12
+call fillRegBuffer
+w0rmNot100:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000101b
+jne w0rmNot101
+mov bh, 2
+mov si, offset mod11w1reg + 15
+call fillRegBuffer
+w0rmNot101:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000110b
+jne w0rmNot110
+mov bh, 2
+mov si, offset mod11w1reg + 18
+call fillRegBuffer
+w0rmNot110:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000111b
+jne w0rmNot111
+mov bh, 2
+mov si, offset mod11w1reg + 21
+call fillRegBuffer
+w0rmNot111:
+
+pop si
+
+ret
+scanRM00w1 ENDP
+
+scanRM00w0 proc
+
+push si
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000000b
+jne w0rmNot000w0
+mov bh, 2
+mov si, offset mod11w0reg + 0
+call fillRegBuffer
+w0rmNot000w0:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000001b
+jne w0rmNot001w0
+mov bh, 2
+mov si, offset mod11w0reg + 3
+call fillRegBuffer
+w0rmNot001w0:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000010b
+jne w0rmNot010w0
+mov bh, 2
+mov si, offset mod11w0reg + 6
+call fillRegBuffer
+w0rmNot010w0:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000011b
+jne w0rmNot011w0
+mov bh, 2
+mov si, offset mod11w0reg + 9
+call fillRegBuffer
+w0rmNot011w0:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000100b
+jne w0rmNot100w0
+mov bh, 2
+mov si, offset mod11w0reg + 12
+call fillRegBuffer
+w0rmNot100w0:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000101b
+jne w0rmNot101w0
+mov bh, 2
+mov si, offset mod11w0reg + 15
+call fillRegBuffer
+w0rmNot101w0:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000110b
+jne w0rmNot110w0
+mov bh, 2
+mov si, offset mod11w0reg + 18
+call fillRegBuffer
+w0rmNot110w0:
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000111b
+jne w0rmNot111w0
+mov bh, 2
+mov si, offset mod11w0reg + 21
+call fillRegBuffer
+w0rmNot111w0:
+
+pop si
+
+ret
+scanRM00w0 ENDP
 
 ; cia be 110 rm, nes ten keicias logika nuo mod
 scanRM PROC
@@ -945,16 +1304,84 @@ printNewline PROC
  ret
 printNewline ENDP
 
+PrintLeftBracket PROC
+push cx
+mov cx, 1
+mov ah, 40h
+mov bx, destFHandle
+lea dx, format
+int 21h
+pop cx
+ret
+PrintLeftBracket ENDP
+
+PrintRightBracket PROC
+push cx
+mov cx, 1
+mov ah, 40h
+mov bx, destFHandle
+lea dx, format +1
+int 21h
+pop cx
+ret
+
+PrintRightBracket ENDP
+push cx
+mov cx, 1
+mov ah, 40h
+mov bx, destFHandle
+lea dx, format+1
+int 21h
+pop cx
+ret
+
+printWordInBrackets PROC
+
+mov al, [dHigh]
+call printHexByte
+
+mov al, [dLow]
+call printHexByte
+
+ret
+printWordInBrackets ENDP
+
+printByteInBrackets PROC
+push cx
+
+mov al, 0
+call printHexByte
+
+mov al, [dLow]
+call printHexByte
+
+mov cx, 1
+lea dx, format + 1
+mov ah, 40h
+mov bx, destFHandle
+int 21h
+
+pop cx
+
+ret
+printByteInBrackets ENDP
+
 printDIstring PROC
  push cx
+ push ax
+
+ mov al, [regBufferCount]
+
  mov ch, 0
  mov cl, [regBufferCount]
 
+
  mov ah, 40h
  mov bx, destFHandle
- mov dx, di
+ lea dx, regBuffer
  int 21h
 
+pop ax
  pop cx
  ret
 printDIstring ENDP

@@ -32,12 +32,23 @@ mov     ds,ax
 
 		xchg ketvirtas, ax
 		xchg al, ah
+
+
+		MOV AX,-21
+		MOV BH,5
+		IDIV BH
+
 		xchg bx, ax
 
 
 
 		; del situ negaliu segeneruoti .COM failo ========
 		les di,adr_y
+		mov dx, 0
+		mov ax, 1234
+		MOV AX,-21
+		MOV BH,5
+		IDIV BH
 		les DI, ptr_str2
 	;	les si, adr_y
 		; =================================================

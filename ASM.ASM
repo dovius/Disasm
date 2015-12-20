@@ -1,6 +1,6 @@
 0100:  4D		Neatpazinta komanda
 0101:  5A		Neatpazinta komanda
-0102:  85		Neatpazinta komanda
+0102:  99		Neatpazinta komanda
 0103:  01		Neatpazinta komanda
 0104:  02		Neatpazinta komanda
 0105:  00		Neatpazinta komanda
@@ -10,8 +10,7 @@
 0109:  00		Neatpazinta komanda
 010A:  01		Neatpazinta komanda
 010B:  00		Neatpazinta komanda
-010C:  FF		Neatpazinta komanda
-010D:  FF		Neatpazinta komanda
+010C:  FFFF		IDIV di
 010E:  00		Neatpazinta komanda
 010F:  00		Neatpazinta komanda
 0110:  00		Neatpazinta komanda
@@ -838,9 +837,7 @@
 0446:  17		Neatpazinta komanda
 0447:  01		Neatpazinta komanda
 0448:  84		Neatpazinta komanda
-0449:  C4A8
-044B:  04		Neatpazinta komanda
-044C:  2E		Neatpazinta komanda
+0449:  C4A82E04		LES bp, [bx+si+2E04]
 044D:  84		Neatpazinta komanda
 044E:  06		Neatpazinta komanda
 044F:  16		Neatpazinta komanda
@@ -851,44 +848,50 @@
 0454:  17		Neatpazinta komanda
 0455:  01		Neatpazinta komanda
 0456:  86		Neatpazinta komanda
-0457:  C493
-0459:  2E		Neatpazinta komanda
-045A:  C43E0134    
-
-
-045E:  2E		Neatpazinta komanda
-045F:  C43E0138        
-
-
-0463:  BA		Neatpazinta komanda
-0464:  00		Neatpazinta komanda
-0465:  00		Neatpazinta komanda
-0466:  B8		Neatpazinta komanda
-0467:  D2		Neatpazinta komanda
-0468:  04		Neatpazinta komanda
-0469:  BB		Neatpazinta komanda
-046A:  0A		Neatpazinta komanda
-046B:  00		Neatpazinta komanda
-046C:  F7		Neatpazinta komanda
-046D:  F3		Neatpazinta komanda
-046E:  B8		Neatpazinta komanda
-046F:  EB		Neatpazinta komanda
-0470:  FF		Neatpazinta komanda
-0471:  B7		Neatpazinta komanda
-0472:  05		Neatpazinta komanda
-0473:  F6		Neatpazinta komanda
-0474:  FF		Neatpazinta komanda
-0475:  B4		Neatpazinta komanda
-0476:  04		Neatpazinta komanda
-0477:  B0		Neatpazinta komanda
-0478:  03		Neatpazinta komanda
-0479:  CD21		INT		21h
-047B:  E8		Neatpazinta komanda
-047C:  05		Neatpazinta komanda
-047D:  00		Neatpazinta komanda
-047E:  B8		Neatpazinta komanda
+0457:  C4B8FFEB		LES di, [bx+si+FFEB]
+045B:  B7		Neatpazinta komanda
+045C:  05		Neatpazinta komanda
+045D:  F6FF		IDIV bh
+045F:  93		XCHG		bx, ax
+0460:  2E		Neatpazinta komanda
+0461:  C43E0134		LES di, [0134]
+0465:  BA		Neatpazinta komanda
+0466:  00		Neatpazinta komanda
+0467:  00		Neatpazinta komanda
+0468:  B8		Neatpazinta komanda
+0469:  D2		Neatpazinta komanda
+046A:  04		Neatpazinta komanda
+046B:  B8		Neatpazinta komanda
+046C:  EB		Neatpazinta komanda
+046D:  FFB7046F:  05		Neatpazinta komanda
+0470:  F6FF		IDIV bh
+0472:  2E		Neatpazinta komanda
+0473:  C43E0138		LES di, [0138]
+0477:  BA		Neatpazinta komanda
+0478:  00		Neatpazinta komanda
+0479:  00		Neatpazinta komanda
+047A:  B8		Neatpazinta komanda
+047B:  D2		Neatpazinta komanda
+047C:  04		Neatpazinta komanda
+047D:  BB		Neatpazinta komanda
+047E:  0A		Neatpazinta komanda
 047F:  00		Neatpazinta komanda
-0480:  4C		Neatpazinta komanda
-0481:  CD21		INT		21h
-0483:  EC		IN		al, dx
-0484:  CF		IRET
+0480:  F7F3		DIV bx
+0482:  B8		Neatpazinta komanda
+0483:  EB		Neatpazinta komanda
+0484:  FFB70486:  05		Neatpazinta komanda
+0487:  F6FF		IDIV bh
+0489:  B4		Neatpazinta komanda
+048A:  04		Neatpazinta komanda
+048B:  B0		Neatpazinta komanda
+048C:  03		Neatpazinta komanda
+048D:  CD21		INT		21h
+048F:  E8		Neatpazinta komanda
+0490:  05		Neatpazinta komanda
+0491:  00		Neatpazinta komanda
+0492:  B8		Neatpazinta komanda
+0493:  00		Neatpazinta komanda
+0494:  4C		Neatpazinta komanda
+0495:  CD21		INT		21h
+0497:  EC		IN		al, dx
+0498:  CF		IRET

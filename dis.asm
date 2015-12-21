@@ -1,4 +1,4 @@
-	;; Programa reaguoja i perduodamus parametrus
+;; Programa reaguoja i perduodamus parametrus
 ;; isveda pagalba, jei nera nurodyti reikiami parametrai
 ;; source failas skaitomas dalimis
 ;; destination failas rasomas dalimis
@@ -49,62 +49,64 @@ line_unkn db 9, 9, 'Neatpazinta komanda',13,10, '$'
 ;komandos-------------------------------
 
 line_in db 9,'in',9,'$'
-						;offset
+					;offset
 com_names 	db	'DIV '	;0
-			db	'IDIV '	;4
-			db	'IN$'	;9
-			db	'IRET$'	;12
-			db	'INT$'	;17
-			db	'LES '	;21
-			db	'XCHG ' ;26
-			db	'TEST ' ;31
+		db	'IDIV '	;4
+		db	'IN$'	;9
+		db	'IRET$'	;12
+		db	'INT$'	;17
+		db	'LES '	;21
+		db	'XCHG ' ;26
+		db	'TEST ' ;31
 ;---------------------------------------
 
 ;registrai------------------------------
-					;offset
+				;offset
 mod11w0reg	db 'al$';0
-			db 'cl$';3
-			db 'dl$';6
-			db 'bl$';9
-			db 'ah$';12
-			db 'ch$';15
-			db 'dh$';18
-			db 'bh$';21
+		db 'cl$';3
+		db 'dl$';6
+		db 'bl$';9
+		db 'ah$';12
+		db 'ch$';15
+		db 'dh$';18
+		db 'bh$';21
 mod11w1reg	db 'ax$';0
-			db 'cx$';3
-			db 'dx$';6
-			db 'bx$';9
-			db 'sp$';12
-			db 'bp$';15
-			db 'si$';18
-			db 'di$';21
-			db ', $';24
+		db 'cx$';3
+		db 'dx$';6
+		db 'bx$';9
+		db 'sp$';12
+		db 'bp$';15
+		db 'si$';18
+		db 'di$';21
+		db ', $';24
 EAdress		db '[bx+si$' ;0
-			db '[bx+di$' ;7
-			db '[bp+si$' ;14
-			db '[bp+di$' ;21
-			db '[si   $' ;28
-			db '[di   $' ;35
-			db '[bp   $' ;42
-			db '[bx   $' ;49
+		db '[bx+di$' ;7
+		db '[bp+si$' ;14
+		db '[bp+di$' ;21
+		db '[si   $' ;28
+		db '[di   $' ;35
+		db '[bp   $' ;42
+		db '[bx   $' ;49
 
 format db '[' ;0
-       db ']' ;1
-			 db '+' ;2
+		 db ']' ;1
+		 db '+' ;2
 ;---------------------------------------
 
 
 
 
-sourceF   	db 'test.exe'
+sourceF   	db 12 dup (0)
 sourceFHandle	dw ?
 
-destF   	db 'asm.asm'
+destF   	db 12 dup (0)
 destFHandle 	dw ?
 
 buffer    db 100 dup (?)
 regBuffer db 100 dup (?)
 regBufferCount db 0
+
+keyFlag db 0
 
 ; poslinkio bitai
 dLow	db 0
@@ -118,15 +120,43 @@ wFlag db 0
 START:
 mov	ax, @data
 mov	es, ax			; es kad galetume naudot stosb funkcija: Store AL at address ES:(E)DI
+;-------------------------
+mov	si, 81h
+call	skip_spaces
+mov	al, byte ptr ds:[si]	; nuskaityti pirma parametro simboli
+cmp	al, 13			; jei nera parametru
+jne	_1
+jmp	help			; tai isvesti pagalba
 
+_1:
+
+;; ar reikia isvesti pagalba
+mov	ax, word ptr ds:[si]
+cmp	ax, 3F2Fh        	; jei nuskaityta "/?" - 3F = '?'; 2F = '/'
+jne	_2
+jmp	help                 	; rastas "/?", vadinasi reikia isvesti pagalba
+_2:
+
+;; destination failo pavadinimas
 lea	di, destF
+call	read_filename		; perkelti is parametro i eilute
+cmp	byte ptr es:[destF], '$' ; jei nieko nenuskaite
+jne	_3
+jmp	help
+_3:
+
+;; source failo pavadinimas
 lea	di, sourceF
+call	read_filename		; perkelti is parametro i eilute
 
 push	ds
 push	si
 
 mov	ax, @data
 mov	ds, ax
+;--------------------
+
+
 
 ;; rasymui
 mov	dx, offset destF	; ikelti i dx destF - failo pavadinima
@@ -135,24 +165,59 @@ mov	cx, 0			; normal - no attributes
 int	21h			; INT 21h / AH= 3Ch - create or truncate file.
 
 
+jnc	_4			; CF set on error AX = error code.
+jmp	err_destination
+
+_4:
+
 mov	ah, 3dh			; atidaro faila - komandos kodas
 mov	al, 1			; rasymui
 int	21h			; INT 21h / AH= 3Dh - open existing file.
 
+jnc	_5			; CF set on error AX = error code.
+jmp	err_destination
+
+_5:
 mov	destFHandle, ax		; issaugom handle
 
 jmp	startConverting
 
+readSourceFile:
+pop	si
+pop	ds
+
+;; source failo pavadinimas
+lea	di, sourceF
+call	read_filename		; perkelti is parametro i eilute
+
+push	ds
+push	si
+
+mov	ax, @data
+mov	ds, ax
+
+cmp	byte ptr ds:[sourceF], '$' ; jei nieko nenuskaite
+jne	startConverting
+jmp	closeF
 
 startConverting:
+;; atidarom
+cmp	byte ptr ds:[sourceF], '$' ; jei nieko nenuskaite
+jne	source_from_file
+
+mov	sourceFHandle, 0
+mov keyFlag, 1
+jmp	skaitom
+
+source_from_file:
 mov	dx, offset sourceF	; failo pavadinimas
-mov	ah, 3dh            	; atidaro faila - komandos kodas
-mov	al, 0              	; 0 - reading, 1-writing, 2-abu
-int	21h			            ; INT 21h / AH= 3Dh - open existing file
-jnc	not_err_source		      ; CF set on error AX = error code.
+mov	ah, 3dh                	; atidaro faila - komandos kodas
+mov	al, 0                  	; 0 - reading, 1-writing, 2-abu
+int	21h			; INT 21h / AH= 3Dh - open existing file
+jnc	not_err_source		; CF set on error AX = error code.
 jmp err_source
 not_err_source:
-mov	sourceFHandle, ax	  ; issaugojam filehandle
+mov	sourceFHandle, ax	; issaugojam filehandle
 
 skaitom:
 
@@ -169,9 +234,10 @@ _6:
 mov	si, offset buffer	; skaitoma is cia
 mov	bx, destFHandle		; rasoma i cia
 
+
 ; cia prasideda pagrindine logika (apdoroja kiekviena baita)
 atrenka:
-lodsb  				; Load byte at address DS:(E)SI into AL
+call keyboard_hex  				; Load byte at address DS:(E)SI into AL
 
 
 lea di, regBuffer
@@ -247,6 +313,15 @@ jne not_test1
 call com_test1
 jmp com_recognized
 not_test1:
+
+;test2*********************
+mov bl, al
+and bl, 11111110b
+cmp bl, 10101000b
+jne not_test2
+call com_test2
+jmp com_recognized
+not_test2:
 
 mov bl, al
 and bl, 11111110b
@@ -357,7 +432,7 @@ stosb                           ; Store AL at address ES:(E)DI, di = di + 1
 pop	ax
 ret
 read_filename_next:
-lodsb				; uzkrauna kita simboli
+call keyboard_hex				; uzkrauna kita simboli
 stosb                           ; Store AL at address ES:(E)DI, di = di + 1
 jmp read_filename_start
 
@@ -365,79 +440,79 @@ read_filename ENDP
 
 
 IntegerToHexFromMap PROC
-		push si
-		push di
+	push si
+	push di
 
-    mov si, OFFSET Hex_Map          ; Pointer to hex-character table
+	mov si, OFFSET Hex_Map          ; Pointer to hex-character table
 
-    mov bx, ax                      ; BX = argument AX
-    and bx, 00FFh                   ; Clear BH (just to be on the safe side)
-    shr bx, 4                       ; Isolate high nibble (i.e. 4 bits)
-    mov dl, [si+bx]                 ; Read hex-character from the table
-    mov [di+0], dl                  ; Store character at the first place in the output string
+	mov bx, ax                      ; BX = argument AX
+	and bx, 00FFh                   ; Clear BH (just to be on the safe side)
+	shr bx, 4                       ; Isolate high nibble (i.e. 4 bits)
+	mov dl, [si+bx]                 ; Read hex-character from the table
+	mov [di+0], dl                  ; Store character at the first place in the output string
 
-    mov bx, ax                      ; BX = argument AX (just to be on the safe side)
-    and bx, 00FFh                   ; Clear BH (just to be on the safe side)
-    and bl, 0Fh                     ; Isolate low nibble (i.e. 4 bits)
-    mov dl, [si+bx]                 ; Read hex-character from the table
-    mov [di+1], dl                  ; Store character at the second place in the output string
+	mov bx, ax                      ; BX = argument AX (just to be on the safe side)
+	and bx, 00FFh                   ; Clear BH (just to be on the safe side)
+	and bl, 0Fh                     ; Isolate low nibble (i.e. 4 bits)
+	mov dl, [si+bx]                 ; Read hex-character from the table
+	mov [di+1], dl                  ; Store character at the second place in the output string
 
-		pop di
-		pop si
-    ret
+	pop di
+	pop si
+	ret
 IntegerToHexFromMap ENDP
 
 printLineNumber PROC
 
-  push cx
-  push si
-	push ax
-	push di
+push cx
+push si
+push ax
+push di
 
-  mov di, OFFSET HEX_Out          ; First argument: pointer
-  mov ax, lineCountH               ; Second argument: Integer
-  call IntegerToHexFromMap
+mov di, OFFSET HEX_Out          ; First argument: pointer
+mov ax, lineCountH               ; Second argument: Integer
+call IntegerToHexFromMap
 
-  mov cx, 2
-  mov	ah, 40h
-  mov bx, destFHandle
-  lea dx, HEX_Out
-  int 21h
+mov cx, 2
+mov	ah, 40h
+mov bx, destFHandle
+lea dx, HEX_Out
+int 21h
 
-  mov di, OFFSET HEX_Out          ; First argument: pointer
-  mov ax, lineCount               ; Second argument: Integer
-  call IntegerToHexFromMap
+mov di, OFFSET HEX_Out          ; First argument: pointer
+mov ax, lineCount               ; Second argument: Integer
+call IntegerToHexFromMap
 
-  mov cx, 2
-  mov	ah, 40h
-  mov bx, destFHandle
-  lea dx, HEX_Out
-  int 21h
+mov cx, 2
+mov	ah, 40h
+mov bx, destFHandle
+lea dx, HEX_Out
+int 21h
 
-  mov cx, 3
-  mov ah, 40h
-  mov bx, destFHandle
-  lea dx, lineStringAdd
-  int 21h
+mov cx, 3
+mov ah, 40h
+mov bx, destFHandle
+lea dx, lineStringAdd
+int 21h
 
-	pop di
-	pop ax
-  pop si
-  pop cx
-  ret
+pop di
+pop ax
+pop si
+pop cx
+ret
 printLineNumber ENDP
 
 incLineNumber PROC
-	; --- jei lineCount=255 ir norim INC, reikia ji prilygint 0 ir lineCountH ++
-	cmp [lineCount], 255
-	jne nereikTvarkytiDidelioHex
-	mov [lineCount], 0
-	inc [lineCountH]
-	dec [lineCount]
-	nereikTvarkytiDidelioHex:
-	inc [lineCount]
-	; ---
-	ret
+; --- jei lineCount=255 ir norim INC, reikia ji prilygint 0 ir lineCountH ++
+cmp [lineCount], 255
+jne nereikTvarkytiDidelioHex
+mov [lineCount], 0
+inc [lineCountH]
+dec [lineCount]
+nereikTvarkytiDidelioHex:
+inc [lineCount]
+; ---
+ret
 incLineNumber ENDP
 
 
@@ -447,16 +522,16 @@ call printHexByte
 push cx
 push ax
 
- mov cx, 23
- mov ah, 40h
- mov bx, destFHandle
- lea dx, line_unkn
- int 21h
+mov cx, 23
+mov ah, 40h
+mov bx, destFHandle
+lea dx, line_unkn
+int 21h
 
- pop ax
- pop cx
- pop di
- ret
+pop ax
+pop cx
+pop di
+ret
 com_unk ENDP
 
 readToBuff PROC
@@ -500,7 +575,7 @@ cmp cx, 1
 jne skipRefillin2
 call readToBuff
 skipRefillin2:
-lodsb
+call keyboard_hex
 push ax
 dec cx
 call printHexByte
@@ -541,7 +616,7 @@ cmp cx, 1
 jne skipRefillint2
 call readToBuff
 skipRefillint2:
-lodsb
+call keyboard_hex
 push ax
 dec cx
 call printHexByte
@@ -567,62 +642,62 @@ com_int2 ENDP
 
 ;----------------------IRET
 com_iret PROC
- call printHexByte
- call printDoubleTab
- push cx
- mov cx, 4
- mov ah, 40h
- mov bx, destFHandle
- mov dx, offset com_names + 12
- int 21h
- pop cx
- call printNewline
- jmp inc_lineCount
- ret
+call printHexByte
+call printDoubleTab
+push cx
+mov cx, 4
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset com_names + 12
+int 21h
+pop cx
+call printNewline
+jmp inc_lineCount
+ret
 com_iret ENDP
 ;---------
 
 ;----------------------INT 3
 com_int PROC
- call printHexByte
- call printDoubleTab
- push cx
- mov cx, 3
- mov ah, 40h
- mov bx, destFHandle
- mov dx, offset com_names + 17
- int 21h
- pop cx
- call printDoubleTab
- mov al, 03h
- call printHexByte
- call printNewline
- jmp inc_lineCount
- ret
+call printHexByte
+call printDoubleTab
+push cx
+mov cx, 3
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset com_names + 17
+int 21h
+pop cx
+call printDoubleTab
+mov al, 03h
+call printHexByte
+call printNewline
+jmp inc_lineCount
+ret
 com_int ENDP
 ;---------
 
 ;----------------------IN
 com_in PROC
- and bl, 00000001b
- cmp bl, 0
- jne in_ax
- mov dx, offset mod11w0reg+0
- jmp print_in
- in_ax:
- mov dx, offset mod11w1reg+0
- print_in:
- push dx
- call printHexByte
- call printDoubleTab
- push cx
- mov cx, 2
- mov ah, 40h
- mov bx, destFHandle
- mov dx, offset com_names + 9
- int 21h
- pop cx
- call printDoubleTab
+and bl, 00000001b
+cmp bl, 0
+jne in_ax
+mov dx, offset mod11w0reg+0
+jmp print_in
+in_ax:
+mov dx, offset mod11w1reg+0
+print_in:
+push dx
+call printHexByte
+call printDoubleTab
+push cx
+mov cx, 2
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset com_names + 9
+int 21h
+pop cx
+call printDoubleTab
 
 pop dx
 push cx
@@ -640,9 +715,9 @@ mov dx, offset mod11w1reg + 6
 int 21h
 pop cx
 
- call printNewline
- jmp inc_lineCount
- ret
+call printNewline
+jmp inc_lineCount
+ret
 com_in ENDP
 ;---------
 
@@ -670,9 +745,34 @@ jne xchgnotdx
 mov dx, offset mod11w1reg + 6
 jmp xchgprint
 
-xchgnotdx: ; turi buti bx
+xchgnotdx: ; bx is ax
+cmp bl, 00000011b ; dx is ax
+jne xchgnotbx
 mov dx, offset mod11w1reg + 9
 jmp xchgprint
+
+xchgnotbx:
+cmp bl, 00000011b ; sp is ax
+jne xchgnotsp
+mov dx, offset mod11w1reg + 12
+jmp xchgprint
+
+xchgnotsp:
+cmp bl, 00000100b
+jne xchgnotbp
+mov dx, offset mod11w1reg + 15
+jmp xchgprint
+
+xchgnotbp:
+cmp bl, 00000101b
+jne xchgnotsi
+mov dx, offset mod11w1reg + 18
+jmp xchgprint
+
+xchgnotsi:
+mov dx, offset mod11w1reg + 21
+jmp xchgprint
+
 
 xchgprint:
 push dx
@@ -688,7 +788,8 @@ pop cx
 
 call printDoubleTab
 
-pop dx
+
+mov dx, offset mod11w1reg + 0
 push cx
 mov cx, 2
 mov ah, 40h
@@ -700,11 +801,12 @@ pop cx
 
 call printOperandSeparator
 
+pop dx
 push cx
 mov cx, 2
 mov ah, 40h
 mov bx, destFHandle
-mov dx, offset mod11w1reg + 0
+;mov dx, offset mod11w1reg + 0
 ;mov dx, offset com_names
 int 21h
 pop cx
@@ -733,7 +835,7 @@ cmp cx, 1
 jne skipRefilldiv
 call readToBuff
 skipRefilldiv:
-lodsb
+call keyboard_hex
 dec cx
 
 call printHexByte
@@ -772,8 +874,10 @@ cmp cx, 1
 jne skipRefilldiv5
 call readToBuff
 skipRefilldiv5:
-lodsb
+call keyboard_hex
 dec cx
+
+
 
 call printHexByte
 call incLineNumber
@@ -792,6 +896,23 @@ pop si
 jmp continue2
 itsIDIV:
 ;idiv
+
+mov bl, al
+and bl, 00111000b
+cmp bl, 00000000b
+jne itsTest
+;test
+push si
+mov bh, 5
+mov si, offset com_names + 30
+
+
+
+call fillRegBuffer
+pop si
+jmp cont117
+
+itsTest:
 push si
 mov bh, 5
 mov si, offset com_names + 4
@@ -800,6 +921,7 @@ pop si
 continue2:
 
 
+cont117:
 ;;;;;;------------tikrinamMod
 mov bl, al
 and bl, 11000000b
@@ -833,7 +955,7 @@ cmp cx, 1
 jne skipRefilldiv2
 call readToBuff
 skipRefilldiv2:
-lodsb
+call keyboard_hex
 dec cx
 
 call printHexByte
@@ -847,6 +969,16 @@ and bl, 11000000b
 cmp bl, 00000000b
 jne DIVmodnot00
 
+mov bl, al
+cmp bl, 00000001b
+jne cont112
+
+call scanRM00w1
+call printDoubleTab
+call printDIstring
+call printNewline
+
+cont112:
 ;nuskaitome reg, cia kai w=1
 call scanRM
 
@@ -854,7 +986,6 @@ mov bl, al
 and bl, 00000111b
 cmp bl, 00000110b
 jne DIVrmNot110
-
 
 
 DIVrmNot110:
@@ -872,7 +1003,7 @@ cmp cx, 1
 jne skipRefillLes
 call readToBuff
 skipRefillLes:
-lodsb
+call keyboard_hex
 dec cx
 
 call printHexByte
@@ -1223,7 +1354,7 @@ cmp cx, 1
 jne skipRefillLes2
 call readToBuff
 skipRefillLes2:
-lodsb
+call keyboard_hex
 mov [dLow], al
 dec cx
 call incLineNumber
@@ -1233,7 +1364,7 @@ cmp cx, 1
 jne skipRefillLes3
 call readToBuff
 skipRefillLes3:
-lodsb
+call keyboard_hex
 mov [dHigh], al
 dec cx
 call incLineNumber
@@ -1263,40 +1394,40 @@ scanRMwhenMod00 ENDP
 
 ;formatavimo proceduros
 printDoubleTab PROC
- push cx
- push ax
+push cx
+push ax
 
- mov cx, 2
- mov ah, 40h
- mov bx, destFHandle
- lea dx, line_doubleTab
- int 21h
+mov cx, 2
+mov ah, 40h
+mov bx, destFHandle
+lea dx, line_doubleTab
+int 21h
 
- pop ax
- pop cx
- ret
+pop ax
+pop cx
+ret
 printDoubleTab ENDP
 
 printHNewline PROC
- push cx
- mov cx, 3
- mov ah, 40h
- mov bx, destFHandle
- lea dx, line_hNewLine
- int 21h
- pop cx
- ret
+push cx
+mov cx, 3
+mov ah, 40h
+mov bx, destFHandle
+lea dx, line_hNewLine
+int 21h
+pop cx
+ret
 printHNewline ENDP
 
 printNewline PROC
- push cx
- mov cx, 2
- mov ah, 40h
- mov bx, destFHandle
- lea dx, line_NewLine
- int 21h
- pop cx
- ret
+push cx
+mov cx, 2
+mov ah, 40h
+mov bx, destFHandle
+lea dx, line_NewLine
+int 21h
+pop cx
+ret
 printNewline ENDP
 
 PrintLeftBracket PROC
@@ -1362,60 +1493,60 @@ ret
 printByteInBrackets ENDP
 
 printDIstring PROC
- push cx
- push ax
+push cx
+push ax
 
- mov al, [regBufferCount]
+mov al, [regBufferCount]
 
- mov ch, 0
- mov cl, [regBufferCount]
+mov ch, 0
+mov cl, [regBufferCount]
 
 
- mov ah, 40h
- mov bx, destFHandle
- lea dx, regBuffer
- int 21h
+mov ah, 40h
+mov bx, destFHandle
+lea dx, regBuffer
+int 21h
 
 pop ax
- pop cx
- ret
+pop cx
+ret
 printDIstring ENDP
 
 printOperandSeparator PROC
- push cx
- mov cx, 2
- mov ah, 40h
- mov bx, destFHandle
- lea dx, line_OperandSeparator
- int 21h
- pop cx
- ret
+push cx
+mov cx, 2
+mov ah, 40h
+mov bx, destFHandle
+lea dx, line_OperandSeparator
+int 21h
+pop cx
+ret
 printOperandSeparator ENDP
 
 fillRegBuffer PROC
 
 ;aprasysiu tai pradzioj scan ciklo
-	;lea di, regBuffer
-	push cx
-	push si
+;lea di, regBuffer
+push cx
+push si
 
-	mov ch, 0
-	mov cl, bh
+mov ch, 0
+mov cl, bh
 
-	pushToBuffer2:
-	push bx
-	mov bl, [si]
-	mov [di], bl
-	pop bx
-	inc si
-	inc di
-	inc [regBufferCount]
-	loop pushToBuffer2
+pushToBuffer2:
+push bx
+mov bl, [si]
+mov [di], bl
+pop bx
+inc si
+inc di
+inc [regBufferCount]
+loop pushToBuffer2
 
-	pop si
-	pop cx
+pop si
+pop cx
 
-	ret
+ret
 fillRegBuffer ENDP
 
 
@@ -1458,7 +1589,7 @@ cmp cx, 1
 jne skipRefillLes4
 call readToBuff
 skipRefillLes4:
-lodsb
+call keyboard_hex
 mov [dLow], al
 dec cx
 call incLineNumber
@@ -1467,7 +1598,7 @@ cmp cx, 1
 jne skipRefillLes5
 call readToBuff
 skipRefillLes5:
-lodsb
+call keyboard_hex
 mov [dHigh], al
 dec cx
 call incLineNumber
@@ -1512,7 +1643,7 @@ cmp cx, 1
 jne skipRefillLes6
 call readToBuff
 skipRefillLes6:
-lodsb
+call keyboard_hex
 mov [dLow], al
 dec cx
 call incLineNumber
@@ -1582,7 +1713,7 @@ cmp cx, 1
 jne skipRefilldiv1
 call readToBuff
 skipRefilldiv1:
-lodsb
+call keyboard_hex
 dec cx
 
 call printHexByte
@@ -1603,6 +1734,164 @@ mov [regBufferCount], 0
 
 ret
 com_xchg2  ENDP
+
+; ------------------------------ test2
+com_test2 proc
+cmp al, 10101000b
+je test2w0
+jmp test2w1
+test2w0:
+
+call printHexByte
+cmp cx, 1
+jne skipRefilltest2w0
+call readToBuff
+skipRefilltest2w0:
+call keyboard_hex
+push ax
+dec cx
+call printHexByte
+call incLineNumber
+call printDoubleTab
+push cx
+mov cx, 4
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset com_names + 30
+int 21h
+pop cx
+
+call printDoubleTab
+
+push cx
+mov cx, 2
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset mod11w0reg
+int 21h
+pop cx
+call printOperandSeparator
+pop ax
+call printHexByte
+call printHNewline
+jmp inc_lineCount
+ret
+
+test2w1:
+call printHexByte
+cmp cx, 1
+jne skipRefilltest2w1
+call readToBuff
+skipRefilltest2w1:
+call keyboard_hex
+push ax
+dec cx
+call printHexByte
+call incLineNumber
+cmp cx, 1
+jne skipRefilltest2w12
+call readToBuff
+skipRefilltest2w12:
+pop ax
+mov bx, ax
+call keyboard_hex
+push bx
+push ax
+call printHexByte
+call incLineNumber
+call printDoubleTab
+push cx
+mov cx, 4
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset com_names + 30
+int 21h
+pop cx
+call printDoubleTab
+
+push cx
+mov cx, 2
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset mod11w1reg
+int 21h
+pop cx
+call printOperandSeparator
+
+pop ax
+pop bx
+;xchg ax, bx
+push bx
+call printHexByte
+pop bx
+mov ax, bx
+call printHexByte
+call printHNewline
+jmp inc_lineCount
+ret
+
+com_test2 ENDP
+
+;--------------
+keyboard_hex PROC
+cmp keyFlag, 1
+je makeHex
+lodsb
+ret
+makeHex:
+lodsb
+mov bx, ax
+lodsb
+;0-9
+;A-F
+key_al:
+cmp al, '0'
+jl key_error_al
+cmp al, 'F'
+jg key_error_al
+cmp al, '9'
+jg key_letter_al
+sub al, '0'
+jmp key_bl
+key_letter_al:
+cmp al, 'A'
+jl key_error_al
+sub al, 'A'
+add al, 10
+key_bl:
+
+cmp bl, '0'
+jl key_error_bl
+cmp bl, 'F'
+jg key_error_bl
+cmp bl, '9'
+jg key_letter_bl
+sub bl, '0'
+jmp endhexkey
+key_letter_bl:
+cmp bl, 'A'
+jl key_error_al
+sub bl, 'A'
+add bl, 10
+
+
+endhexkey:
+
+push dx
+xchg al, bl
+mov dl, 16
+mul dl
+pop dx
+add al, bl
+ret
+
+key_error_al:
+key_error_bl:
+jmp closeF
+
+
+keyboard_hex ENDP
+;------------------
 
 
 end START

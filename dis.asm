@@ -96,10 +96,10 @@ format db '[' ;0
 
 
 
-sourceF   	db 'test.exe'
+sourceF   	db 12 dup (0)
 sourceFHandle	dw ?
 
-destF   	db 'asm.asm'
+destF   	db 12 dup (0)
 destFHandle 	dw ?
 
 buffer    db 100 dup (?)
@@ -118,15 +118,43 @@ wFlag db 0
 START:
 mov	ax, @data
 mov	es, ax			; es kad galetume naudot stosb funkcija: Store AL at address ES:(E)DI
+;-------------------------
+mov	si, 81h
+call	skip_spaces
+mov	al, byte ptr ds:[si]	; nuskaityti pirma parametro simboli
+cmp	al, 13			; jei nera parametru
+jne	_1
+jmp	help			; tai isvesti pagalba
 
-lea	di, destF
-lea	di, sourceF
+_1:
 
-push	ds
-push	si
+	;; ar reikia isvesti pagalba
+	mov	ax, word ptr ds:[si]
+	cmp	ax, 3F2Fh        	; jei nuskaityta "/?" - 3F = '?'; 2F = '/'
+	jne	_2
+	jmp	help                 	; rastas "/?", vadinasi reikia isvesti pagalba
+_2:
 
-mov	ax, @data
-mov	ds, ax
+	;; destination failo pavadinimas
+	lea	di, destF
+	call	read_filename		; perkelti is parametro i eilute
+	cmp	byte ptr es:[destF], '$' ; jei nieko nenuskaite
+	jne	_3
+	jmp	help
+_3:
+
+	;; source failo pavadinimas
+	lea	di, sourceF
+	call	read_filename		; perkelti is parametro i eilute
+
+	push	ds
+	push	si
+
+	mov	ax, @data
+	mov	ds, ax
+;--------------------
+
+
 
 ;; rasymui
 mov	dx, offset destF	; ikelti i dx destF - failo pavadinima
@@ -135,24 +163,59 @@ mov	cx, 0			; normal - no attributes
 int	21h			; INT 21h / AH= 3Ch - create or truncate file.
 
 
+jnc	_4			; CF set on error AX = error code.
+jmp	err_destination
+
+_4:
+
 mov	ah, 3dh			; atidaro faila - komandos kodas
 mov	al, 1			; rasymui
 int	21h			; INT 21h / AH= 3Dh - open existing file.
 
+jnc	_5			; CF set on error AX = error code.
+jmp	err_destination
+
+_5:
 mov	destFHandle, ax		; issaugom handle
 
 jmp	startConverting
 
+readSourceFile:
+	pop	si
+	pop	ds
+
+	;; source failo pavadinimas
+	lea	di, sourceF
+	call	read_filename		; perkelti is parametro i eilute
+
+	push	ds
+	push	si
+
+	mov	ax, @data
+	mov	ds, ax
+	
+	cmp	byte ptr ds:[sourceF], '$' ; jei nieko nenuskaite
+	jne	startConverting
+	jmp	closeF
 
 startConverting:
-mov	dx, offset sourceF	; failo pavadinimas
-mov	ah, 3dh            	; atidaro faila - komandos kodas
-mov	al, 0              	; 0 - reading, 1-writing, 2-abu
-int	21h			            ; INT 21h / AH= 3Dh - open existing file
-jnc	not_err_source		      ; CF set on error AX = error code.
-jmp err_source
-not_err_source:
-mov	sourceFHandle, ax	  ; issaugojam filehandle
+	;; atidarom
+	cmp	byte ptr ds:[sourceF], '$' ; jei nieko nenuskaite
+	jne	source_from_file
+	
+	mov	sourceFHandle, 0
+	;mov keyFlag, 1
+	jmp	skaitom
+
+	source_from_file:
+	mov	dx, offset sourceF	; failo pavadinimas
+	mov	ah, 3dh                	; atidaro faila - komandos kodas
+	mov	al, 0                  	; 0 - reading, 1-writing, 2-abu
+	int	21h			; INT 21h / AH= 3Dh - open existing file
+	jnc	not_err_source		; CF set on error AX = error code.
+	jmp err_source
+	not_err_source:
+	mov	sourceFHandle, ax	; issaugojam filehandle
 
 skaitom:
 
@@ -168,6 +231,7 @@ jmp closeF
 _6:
 mov	si, offset buffer	; skaitoma is cia
 mov	bx, destFHandle		; rasoma i cia
+
 
 ; cia prasideda pagrindine logika (apdoroja kiekviena baita)
 atrenka:

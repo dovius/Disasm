@@ -1847,7 +1847,12 @@ add bl, 10
 
 
 endhexkey:
-shl bl, 1
+
+push dx
+xchg al, bl
+mov dl, 16
+mul dl
+pop dx
 add al, bl
 ret
 

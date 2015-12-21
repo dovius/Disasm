@@ -248,6 +248,15 @@ call com_test1
 jmp com_recognized
 not_test1:
 
+;test2*********************
+mov bl, al
+and bl, 11111110b
+cmp bl, 10101000b
+jne not_test2
+call com_test2
+jmp com_recognized
+not_test2:
+
 mov bl, al
 and bl, 11111110b
 cmp bl, 10000110b
@@ -670,9 +679,34 @@ jne xchgnotdx
 mov dx, offset mod11w1reg + 6
 jmp xchgprint
 
-xchgnotdx: ; turi buti bx
+xchgnotdx: ; bx is ax
+cmp bl, 00000011b ; dx is ax
+jne xchgnotbx
 mov dx, offset mod11w1reg + 9
 jmp xchgprint
+
+xchgnotbx:
+cmp bl, 00000011b ; sp is ax
+jne xchgnotsp
+mov dx, offset mod11w1reg + 12
+jmp xchgprint
+
+xchgnotsp:
+cmp bl, 00000100b
+jne xchgnotbp
+mov dx, offset mod11w1reg + 15
+jmp xchgprint
+
+xchgnotbp:
+cmp bl, 00000101b
+jne xchgnotsi
+mov dx, offset mod11w1reg + 18
+jmp xchgprint
+
+xchgnotsi:
+mov dx, offset mod11w1reg + 21
+jmp xchgprint
+
 
 xchgprint:
 push dx
@@ -688,7 +722,8 @@ pop cx
 
 call printDoubleTab
 
-pop dx
+
+mov dx, offset mod11w1reg + 0
 push cx
 mov cx, 2
 mov ah, 40h
@@ -700,11 +735,12 @@ pop cx
 
 call printOperandSeparator
 
+pop dx
 push cx
 mov cx, 2
 mov ah, 40h
 mov bx, destFHandle
-mov dx, offset mod11w1reg + 0
+;mov dx, offset mod11w1reg + 0
 ;mov dx, offset com_names
 int 21h
 pop cx
@@ -1603,6 +1639,103 @@ mov [regBufferCount], 0
 
 ret
 com_xchg2  ENDP
+
+; ------------------------------ test2
+com_test2 proc
+cmp al, 10101000b
+je test2w0
+jmp test2w1
+test2w0:
+
+call printHexByte
+cmp cx, 1
+jne skipRefilltest2w0
+call readToBuff
+skipRefilltest2w0:
+lodsb
+push ax
+dec cx
+call printHexByte
+call incLineNumber
+call printDoubleTab
+push cx
+mov cx, 4
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset com_names + 30
+int 21h
+pop cx
+
+call printDoubleTab
+
+push cx
+mov cx, 2
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset mod11w0reg
+int 21h
+pop cx
+call printOperandSeparator
+pop ax
+call printHexByte
+call printHNewline
+jmp inc_lineCount
+ret
+
+test2w1:
+call printHexByte
+cmp cx, 1
+jne skipRefilltest2w1
+call readToBuff
+skipRefilltest2w1:
+lodsb
+push ax
+dec cx
+call printHexByte
+call incLineNumber
+cmp cx, 1
+jne skipRefilltest2w12
+call readToBuff
+skipRefilltest2w12:
+pop ax
+mov bx, ax
+lodsb
+push bx
+push ax
+call printHexByte
+call incLineNumber
+call printDoubleTab
+push cx
+mov cx, 4
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset com_names + 30
+int 21h
+pop cx
+call printDoubleTab
+
+push cx
+mov cx, 2
+mov ah, 40h
+mov bx, destFHandle
+mov dx, offset mod11w1reg
+int 21h
+pop cx
+call printOperandSeparator
+
+pop ax
+pop bx
+;xchg ax, bx
+push bx
+call printHexByte
+pop bx
+mov ax, bx
+call printHexByte
+call printHNewline
+jmp inc_lineCount
+ret
+
+com_test2 ENDP
 
 
 end START

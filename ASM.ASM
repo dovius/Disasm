@@ -835,8 +835,7 @@
 0443:  2E		Neatpazinta komanda
 0444:  87061701		XCHG ax, [0117]
 0448:  84C4		TEST ax, ah
-044A:  A8		Neatpazinta komanda
-044B:  04		Neatpazinta komanda
+044A:  A804		TEST		al, 04h
 044C:  2E		Neatpazinta komanda
 044D:  84061601		TEST ax, [0116]
 0451:  2E		Neatpazinta komanda
@@ -848,7 +847,7 @@
 045B:  B7		Neatpazinta komanda
 045C:  05		Neatpazinta komanda
 045D:  F6FF		IDIV bh
-045F:  93		XCHG		bx, ax
+045F:  93		XCHG		ax, bx
 0460:  2E		Neatpazinta komanda
 0461:  C43E3401		LES di, [0134]
 0465:  BA		Neatpazinta komanda

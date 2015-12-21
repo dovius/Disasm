@@ -106,6 +106,8 @@ buffer    db 100 dup (?)
 regBuffer db 100 dup (?)
 regBufferCount db 0
 
+keyFlag db 0
+
 ; poslinkio bitai
 dLow	db 0
 dHigh db 0
@@ -204,7 +206,7 @@ startConverting:
 	jne	source_from_file
 	
 	mov	sourceFHandle, 0
-	;mov keyFlag, 1
+	mov keyFlag, 1
 	jmp	skaitom
 
 	source_from_file:
@@ -235,7 +237,7 @@ mov	bx, destFHandle		; rasoma i cia
 
 ; cia prasideda pagrindine logika (apdoroja kiekviena baita)
 atrenka:
-lodsb  				; Load byte at address DS:(E)SI into AL
+call keyboard_hex  				; Load byte at address DS:(E)SI into AL
 
 
 lea di, regBuffer
@@ -430,7 +432,7 @@ stosb                           ; Store AL at address ES:(E)DI, di = di + 1
 pop	ax
 ret
 read_filename_next:
-lodsb				; uzkrauna kita simboli
+call keyboard_hex				; uzkrauna kita simboli
 stosb                           ; Store AL at address ES:(E)DI, di = di + 1
 jmp read_filename_start
 
@@ -573,7 +575,7 @@ cmp cx, 1
 jne skipRefillin2
 call readToBuff
 skipRefillin2:
-lodsb
+call keyboard_hex
 push ax
 dec cx
 call printHexByte
@@ -614,7 +616,7 @@ cmp cx, 1
 jne skipRefillint2
 call readToBuff
 skipRefillint2:
-lodsb
+call keyboard_hex
 push ax
 dec cx
 call printHexByte
@@ -833,7 +835,7 @@ cmp cx, 1
 jne skipRefilldiv
 call readToBuff
 skipRefilldiv:
-lodsb
+call keyboard_hex
 dec cx
 
 call printHexByte
@@ -872,7 +874,7 @@ cmp cx, 1
 jne skipRefilldiv5
 call readToBuff
 skipRefilldiv5:
-lodsb
+call keyboard_hex
 dec cx
 
 call printHexByte
@@ -933,7 +935,7 @@ cmp cx, 1
 jne skipRefilldiv2
 call readToBuff
 skipRefilldiv2:
-lodsb
+call keyboard_hex
 dec cx
 
 call printHexByte
@@ -972,7 +974,7 @@ cmp cx, 1
 jne skipRefillLes
 call readToBuff
 skipRefillLes:
-lodsb
+call keyboard_hex
 dec cx
 
 call printHexByte
@@ -1323,7 +1325,7 @@ cmp cx, 1
 jne skipRefillLes2
 call readToBuff
 skipRefillLes2:
-lodsb
+call keyboard_hex
 mov [dLow], al
 dec cx
 call incLineNumber
@@ -1333,7 +1335,7 @@ cmp cx, 1
 jne skipRefillLes3
 call readToBuff
 skipRefillLes3:
-lodsb
+call keyboard_hex
 mov [dHigh], al
 dec cx
 call incLineNumber
@@ -1558,7 +1560,7 @@ cmp cx, 1
 jne skipRefillLes4
 call readToBuff
 skipRefillLes4:
-lodsb
+call keyboard_hex
 mov [dLow], al
 dec cx
 call incLineNumber
@@ -1567,7 +1569,7 @@ cmp cx, 1
 jne skipRefillLes5
 call readToBuff
 skipRefillLes5:
-lodsb
+call keyboard_hex
 mov [dHigh], al
 dec cx
 call incLineNumber
@@ -1612,7 +1614,7 @@ cmp cx, 1
 jne skipRefillLes6
 call readToBuff
 skipRefillLes6:
-lodsb
+call keyboard_hex
 mov [dLow], al
 dec cx
 call incLineNumber
@@ -1682,7 +1684,7 @@ cmp cx, 1
 jne skipRefilldiv1
 call readToBuff
 skipRefilldiv1:
-lodsb
+call keyboard_hex
 dec cx
 
 call printHexByte
@@ -1716,7 +1718,7 @@ cmp cx, 1
 jne skipRefilltest2w0
 call readToBuff
 skipRefilltest2w0:
-lodsb
+call keyboard_hex
 push ax
 dec cx
 call printHexByte
@@ -1752,7 +1754,7 @@ cmp cx, 1
 jne skipRefilltest2w1
 call readToBuff
 skipRefilltest2w1:
-lodsb
+call keyboard_hex
 push ax
 dec cx
 call printHexByte
@@ -1763,7 +1765,7 @@ call readToBuff
 skipRefilltest2w12:
 pop ax
 mov bx, ax
-lodsb
+call keyboard_hex
 push bx
 push ax
 call printHexByte
@@ -1800,6 +1802,62 @@ jmp inc_lineCount
 ret
 
 com_test2 ENDP
+
+;--------------
+keyboard_hex PROC
+cmp keyFlag, 1
+je makeHex
+lodsb
+ret
+makeHex:
+lodsb
+mov bx, ax
+lodsb
+;0-9
+;A-F
+key_al:
+cmp al, '0'
+jl key_error_al
+cmp al, 'F'
+jg key_error_al
+cmp al, '9'
+jg key_letter_al
+sub al, '0'
+jmp key_bl
+key_letter_al:
+cmp al, 'A'
+jl key_error_al
+sub al, 'A'
+add al, 10
+key_bl:
+
+cmp bl, '0'
+jl key_error_bl
+cmp bl, 'F'
+jg key_error_bl
+cmp bl, '9'
+jg key_letter_bl
+sub bl, '0'
+jmp endhexkey
+key_letter_bl:
+cmp bl, 'A'
+jl key_error_al
+sub bl, 'A'
+add bl, 10
+
+
+endhexkey:
+shl bl, 1
+add al, bl
+ret
+
+key_error_al:
+key_error_bl:
+jmp closeF
+
+
+keyboard_hex ENDP
+;------------------
 
 
 end START

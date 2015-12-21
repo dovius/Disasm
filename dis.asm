@@ -56,8 +56,8 @@ com_names 	db	'DIV '	;0
 			db	'IRET$'	;12
 			db	'INT$'	;17
 			db	'LES '	;21
-			db	'XCHG$' ;26
-			db	'TEST$' ;31
+			db	'XCHG ' ;26
+			db	'TEST ' ;31
 ;---------------------------------------
 
 ;registrai------------------------------
@@ -233,12 +233,29 @@ jmp com_recognized
 not_les:
 
 mov bl, al
-and bl, 11110110b
+and bl, 11111110b
 cmp bl, 11110110b
 jne not_div
 call com_div
 jmp com_recognized
 not_div:
+
+mov bl, al
+and bl, 11111110b
+cmp bl, 10000100b
+jne not_test1
+call com_test1
+jmp com_recognized
+not_test1:
+
+mov bl, al
+and bl, 11111110b
+cmp bl, 10000110b
+jne not_xchg2
+call com_xchg2
+jmp com_recognized
+not_xchg2:
+
 
 ; Nezinoma komanda******************
 call com_unk
@@ -248,7 +265,14 @@ com_recognized:
 inc_lineCount:
 call incLineNumber
 
-loop	atrenka
+
+dec cx
+cmp cx, 0
+je baigemLoop
+jmp	atrenka
+
+baigemLoop:
+
 jmp skaitom
 
 
@@ -690,9 +714,9 @@ jmp inc_lineCount
 ret
 com_xchg ENDP
 
-; ------------------------------ LES
+; ------------------------------ TEST!
 
-com_div proc
+com_test1 proc
 call printHexByte
 
 mov bl, al
@@ -715,11 +739,51 @@ dec cx
 call printHexByte
 call incLineNumber
 
+push si
+mov bh, 5
+mov si, offset com_names + 30
+call fillRegBuffer
+pop si
+
+
+call modregrm
+
+
+mov [regBufferCount], 0
+ret
+com_test1  ENDP
+
+
+; ------------------------------ DIV
+com_div proc
+call printHexByte
+
+mov bl, al
+and bl, 00000001b
+cmp bl, 00000001b
+je w1DIV
+mov [wFlag], 0
+jmp continue1DIV
+w1DIV:
+mov [wFlag], 1
+continue1DIV:
+
+cmp cx, 1
+jne skipRefilldiv5
+call readToBuff
+skipRefilldiv5:
+lodsb
+dec cx
+
+call printHexByte
+call incLineNumber
+
 ; ziurim DIV ar IDIV
 mov bl, al
 and bl, 00111000b
 cmp bl, 00110000b
 jne itsIDIV
+;its div ->
 push si
 mov bh, 4
 mov si, offset com_names + 0
@@ -727,6 +791,7 @@ call fillRegBuffer
 pop si
 jmp continue2
 itsIDIV:
+;idiv
 push si
 mov bh, 5
 mov si, offset com_names + 4
@@ -734,11 +799,14 @@ call fillRegBuffer
 pop si
 continue2:
 
+
+;;;;;;------------tikrinamMod
 mov bl, al
 and bl, 11000000b
 cmp bl, 11000000b
 jne DIVmodnot11
 
+;-------------------mod11
 ; ziurim w0 ar w1
 mov bl, [wFlag]
 cmp bl, 1
@@ -752,8 +820,45 @@ continue3:
 call printDoubleTab
 call printDIstring
 call printNewline
-
+;-------------------
 DIVmodnot11:
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;; mod 10
+mov bl, al
+and bl, 11000000b
+cmp bl, 10000000b
+jne DIVmodnot10
+
+cmp cx, 1
+jne skipRefilldiv2
+call readToBuff
+skipRefilldiv2:
+lodsb
+dec cx
+
+call printHexByte
+call incLineNumber
+
+DIVmodnot10:
+
+;;;;;;;;;;;;;;;;;;;;; mod00
+mov bl, al
+and bl, 11000000b
+cmp bl, 00000000b
+jne DIVmodnot00
+
+;nuskaitome reg, cia kai w=1
+call scanRM
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000110b
+jne DIVrmNot110
+
+
+
+DIVrmNot110:
+DIVmodnot00:
 
 
 mov [regBufferCount], 0
@@ -780,167 +885,7 @@ mov si, offset com_names + 21
 call fillRegBuffer
 pop si
 
-mov bl, al
-and bl, 11000000b
-cmp bl, 00000000b
-jne LESmodnot00
-
-;nuskaitome reg, cia kai w=1
-call scanREG
-call scanRM
-
-mov bl, al
-and bl, 00000111b
-cmp bl, 00000110b
-jne rmNot110
-
-
-; skaitom poslinkio LowByte
-cmp cx, 1
-jne skipRefillLes2
-call readToBuff
-skipRefillLes2:
-lodsb
-mov [dLow], al
-dec cx
-call incLineNumber
-
-;Skaitom poslinkio HighByte
-cmp cx, 1
-jne skipRefillLes3
-call readToBuff
-skipRefillLes3:
-lodsb
-mov [dHigh], al
-dec cx
-call incLineNumber
-
-call printHexByte
-mov al, [dLow]
-call printHexByte
-
-call printDoubleTab
-call printDIstring
-call PrintLeftBracket
-call printWordInBrackets
-call PrintRightBracket
-rmNot110:
-
-LESmodnot00:
-
-mov bl, al
-and bl, 11000000b
-cmp bl, 10000000b
-jne modNot10
-
-call scanREG
-call scanRM
-
-mov bl, al
-and bl, 00000111b
-cmp bl, 00000110b
-jne rmNot110v2
-mov bh, 6
-mov si, offset EAdress + 42
-call fillRegBuffer
-rmNot110v2:
-
-; skaitom poslinkio LowByte
-cmp cx, 1
-jne skipRefillLes4
-call readToBuff
-skipRefillLes4:
-lodsb
-mov [dLow], al
-dec cx
-call incLineNumber
-
-cmp cx, 1
-jne skipRefillLes5
-call readToBuff
-skipRefillLes5:
-lodsb
-mov [dHigh], al
-dec cx
-call incLineNumber
-
-call printHexByte
-mov al, [dLow]
-call printHexByte
-
-call printDoubleTab
-
-push si
-mov bh, 1
-mov si, offset format + 2
-call fillRegBuffer
-pop si
-
-call printDIstring
-call printWordInBrackets
-call PrintRightBracket
-modNot10:
-
-mov bl, al
-and bl, 11000000b
-cmp bl, 01000000b
-jne modNot01
-
-;;----------------------------- 1byte
-call scanREG
-call scanRM
-
-mov bl, al
-and bl, 00000111b
-cmp bl, 00000110b
-jne rmNot110v3
-mov bh, 6
-mov si, offset EAdress + 42
-call fillRegBuffer
-rmNot110v3:
-
-; skaitom poslinkio LowByte
-cmp cx, 1
-jne skipRefillLes6
-call readToBuff
-skipRefillLes6:
-lodsb
-mov [dLow], al
-dec cx
-call incLineNumber
-
-mov [dHigh], 0
-mov al, 0
-
-call printHexByte
-mov al, [dLow]
-call printHexByte
-
-call printDoubleTab
-
-push si
-mov bh, 1
-mov si, offset format + 2
-call fillRegBuffer
-pop si
-
-call printDIstring
-call printWordInBrackets
-call PrintRightBracket
-modNot01:
-
-mov bl, al
-and bl, 11000000b
-cmp bl, 11000000b
-jne modNot11
-
-call scanREG
-
-
-
-modNot11:
-
-call printNewline
+call modregrm
 
 
 mov [regBufferCount], 0
@@ -1264,6 +1209,56 @@ pop si
 ret
 scanRM ENDP
 
+
+scanRMwhenMod00 PROC
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000110b
+jne rmNot110
+
+
+; skaitom poslinkio LowByte
+cmp cx, 1
+jne skipRefillLes2
+call readToBuff
+skipRefillLes2:
+lodsb
+mov [dLow], al
+dec cx
+call incLineNumber
+
+;Skaitom poslinkio HighByte
+cmp cx, 1
+jne skipRefillLes3
+call readToBuff
+skipRefillLes3:
+lodsb
+mov [dHigh], al
+dec cx
+call incLineNumber
+
+mov al, [dLow]
+call printHexByte
+mov al, [dHigh]
+call printHexByte
+
+
+
+call printDoubleTab
+call printDIstring
+call PrintLeftBracket
+call printWordInBrackets
+call PrintRightBracket
+
+rmNot110:
+
+ret
+scanRMwhenMod00 ENDP
+
+
+
+
 ;---------
 
 ;formatavimo proceduros
@@ -1422,5 +1417,192 @@ fillRegBuffer PROC
 
 	ret
 fillRegBuffer ENDP
+
+
+
+modregrm proc
+
+
+mov bl, al
+and bl, 11000000b
+cmp bl, 00000000b
+jne LESmodnot00
+
+;nuskaitome reg, cia kai w=1
+call scanREG
+call scanRM
+
+call scanRMwhenMod00
+
+LESmodnot00:
+
+mov bl, al
+and bl, 11000000b
+cmp bl, 10000000b
+jne modNot10
+
+call scanREG
+call scanRM
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000110b
+jne rmNot110v2
+mov bh, 6
+mov si, offset EAdress + 42
+call fillRegBuffer
+rmNot110v2:
+
+; skaitom poslinkio LowByte
+cmp cx, 1
+jne skipRefillLes4
+call readToBuff
+skipRefillLes4:
+lodsb
+mov [dLow], al
+dec cx
+call incLineNumber
+
+cmp cx, 1
+jne skipRefillLes5
+call readToBuff
+skipRefillLes5:
+lodsb
+mov [dHigh], al
+dec cx
+call incLineNumber
+
+call printHexByte
+mov al, [dLow]
+call printHexByte
+
+call printDoubleTab
+
+push si
+mov bh, 1
+mov si, offset format + 2
+call fillRegBuffer
+pop si
+
+call printDIstring
+call printWordInBrackets
+call PrintRightBracket
+modNot10:
+
+mov bl, al
+and bl, 11000000b
+cmp bl, 01000000b
+jne modNot01
+
+;;----------------------------- 1byte
+call scanREG
+call scanRM
+
+mov bl, al
+and bl, 00000111b
+cmp bl, 00000110b
+jne rmNot110v3
+mov bh, 6
+mov si, offset EAdress + 42
+call fillRegBuffer
+rmNot110v3:
+
+; skaitom poslinkio LowByte
+cmp cx, 1
+jne skipRefillLes6
+call readToBuff
+skipRefillLes6:
+lodsb
+mov [dLow], al
+dec cx
+call incLineNumber
+
+mov [dHigh], 0
+mov al, 0
+
+call printHexByte
+mov al, [dLow]
+call printHexByte
+
+call printDoubleTab
+
+push si
+mov bh, 1
+mov si, offset format + 2
+call fillRegBuffer
+pop si
+
+call printDIstring
+call printWordInBrackets
+call PrintRightBracket
+modNot01:
+
+mov bl, al
+and bl, 11000000b
+cmp bl, 11000000b
+jne modNot11
+
+call scanREG
+
+;-------------------mod11
+; ziurim w0 ar w1
+mov bl, [wFlag]
+cmp bl, 1
+jne LESnot1
+call scanRM00w1
+jmp LEScontinue3
+LESnot1:
+call scanRM00w0
+LEScontinue3:
+
+call printDoubleTab
+call printDIstring
+
+modNot11:
+
+call printNewline
+
+ret
+modregrm ENDP
+
+com_xchg2 PROC
+call printHexByte
+
+mov bl, al
+and bl, 00000001b
+cmp bl, 00000001b
+je w11
+mov [wFlag], 0
+jmp continue11
+w11:
+mov [wFlag], 1
+continue11:
+
+cmp cx, 1
+jne skipRefilldiv1
+call readToBuff
+skipRefilldiv1:
+lodsb
+dec cx
+
+call printHexByte
+call incLineNumber
+
+push si
+mov bh, 5
+mov si, offset com_names + 25
+call fillRegBuffer
+pop si
+
+
+call modregrm
+
+
+mov [regBufferCount], 0
+
+
+ret
+com_xchg2  ENDP
+
 
 end START

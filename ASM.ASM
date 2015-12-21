@@ -10,7 +10,8 @@
 0109:  00		Neatpazinta komanda
 010A:  01		Neatpazinta komanda
 010B:  00		Neatpazinta komanda
-010C:  FFFF		IDIV di
+010C:  FF		Neatpazinta komanda
+010D:  FF		Neatpazinta komanda
 010E:  00		Neatpazinta komanda
 010F:  00		Neatpazinta komanda
 0110:  00		Neatpazinta komanda
@@ -832,29 +833,24 @@
 0440:  E404		IN		al, 04h
 0442:  EC		IN		al, dx
 0443:  2E		Neatpazinta komanda
-0444:  87		Neatpazinta komanda
-0445:  06		Neatpazinta komanda
-0446:  17		Neatpazinta komanda
-0447:  01		Neatpazinta komanda
-0448:  84		Neatpazinta komanda
-0449:  C4A82E04		LES bp, [bx+si+2E04]
-044D:  84		Neatpazinta komanda
-044E:  06		Neatpazinta komanda
-044F:  16		Neatpazinta komanda
-0450:  01		Neatpazinta komanda
+0444:  87061701		XCHG ax, [0117]
+0448:  84C4		TEST ax, ah
+044A:  A8		Neatpazinta komanda
+044B:  04		Neatpazinta komanda
+044C:  2E		Neatpazinta komanda
+044D:  84061601		TEST ax, [0116]
 0451:  2E		Neatpazinta komanda
-0452:  87		Neatpazinta komanda
-0453:  06		Neatpazinta komanda
-0454:  17		Neatpazinta komanda
-0455:  01		Neatpazinta komanda
-0456:  86		Neatpazinta komanda
-0457:  C4B8FFEB		LES di, [bx+si+FFEB]
+0452:  87061701		XCHG ax, [0117]
+0456:  86C4		XCHG ax, ah
+0458:  B8		Neatpazinta komanda
+0459:  EB		Neatpazinta komanda
+045A:  FF		Neatpazinta komanda
 045B:  B7		Neatpazinta komanda
 045C:  05		Neatpazinta komanda
 045D:  F6FF		IDIV bh
 045F:  93		XCHG		bx, ax
 0460:  2E		Neatpazinta komanda
-0461:  C43E0134		LES di, [0134]
+0461:  C43E3401		LES di, [0134]
 0465:  BA		Neatpazinta komanda
 0466:  00		Neatpazinta komanda
 0467:  00		Neatpazinta komanda
@@ -863,10 +859,12 @@
 046A:  04		Neatpazinta komanda
 046B:  B8		Neatpazinta komanda
 046C:  EB		Neatpazinta komanda
-046D:  FFB7046F:  05		Neatpazinta komanda
+046D:  FF		Neatpazinta komanda
+046E:  B7		Neatpazinta komanda
+046F:  05		Neatpazinta komanda
 0470:  F6FF		IDIV bh
 0472:  2E		Neatpazinta komanda
-0473:  C43E0138		LES di, [0138]
+0473:  C43E3801		LES di, [0138]
 0477:  BA		Neatpazinta komanda
 0478:  00		Neatpazinta komanda
 0479:  00		Neatpazinta komanda
@@ -879,7 +877,9 @@
 0480:  F7F3		DIV bx
 0482:  B8		Neatpazinta komanda
 0483:  EB		Neatpazinta komanda
-0484:  FFB70486:  05		Neatpazinta komanda
+0484:  FF		Neatpazinta komanda
+0485:  B7		Neatpazinta komanda
+0486:  05		Neatpazinta komanda
 0487:  F6FF		IDIV bh
 0489:  B4		Neatpazinta komanda
 048A:  04		Neatpazinta komanda

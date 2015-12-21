@@ -33,6 +33,10 @@ mov     ds,ax
 		xchg ketvirtas, ax
 		xchg al, ah
 
+		xchg	ax, bx
+		xchg	ax, dx
+		xchg	ax, bp
+
 
 		MOV AX,-21
 		MOV BH,5
